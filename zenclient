@@ -1346,11 +1346,13 @@ elseif i == 2 then
     end)
 
     local flyEnabled = false
-    local flySpeed = 40
+    local flySpeed = 400
     local lastFlyRowTap = 0
     local flyVelocity, flyAttachment, flyConnection
     local flyAlignOrientation
     local flyOldAutoRotate
+    local flySoundConnection
+    local flyMutedSounds = {}
 
     local flyRow = Instance.new("Frame")
     flyRow.Name = "FlyRow"
@@ -1475,7 +1477,7 @@ elseif i == 2 then
 
     local flySliderFill = Instance.new("Frame")
     flySliderFill.Name = "SliderFill"
-    flySliderFill.Size = UDim2.new((flySpeed - 16) / 84, 0, 1, 0)
+    flySliderFill.Size = UDim2.new((flySpeed - 16) / 384, 0, 1, 0)
     flySliderFill.BackgroundColor3 = COLORS.NeonPurple
     flySliderFill.BorderSizePixel = 0
     flySliderFill.ZIndex = 83
@@ -1485,7 +1487,7 @@ elseif i == 2 then
     local flySliderKnob = Instance.new("Frame")
     flySliderKnob.Name = "SliderKnob"
     flySliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-    flySliderKnob.Position = UDim2.new((flySpeed - 16) / 84, 0, 0.5, 0)
+    flySliderKnob.Position = UDim2.new((flySpeed - 16) / 384, 0, 0.5, 0)
     flySliderKnob.Size = UDim2.fromOffset(18, 18)
     flySliderKnob.BackgroundColor3 = COLORS.White
     flySliderKnob.BorderSizePixel = 0
@@ -1497,7 +1499,7 @@ elseif i == 2 then
         local trackWidth = flySlider.AbsoluteSize.X
         if trackWidth <= 0 then return end
         local alpha = math.clamp((x - flySlider.AbsolutePosition.X) / trackWidth, 0, 1)
-        flySpeed = math.floor(16 + alpha * 84 + 0.5)
+        flySpeed = math.floor(16 + alpha * 384 + 0.5)
         flyValueLabel.Text = "Speed: " .. flySpeed
         flySliderFill.Size = UDim2.new(alpha, 0, 1, 0)
         flySliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
@@ -1550,6 +1552,11 @@ elseif i == 2 then
 
     local function stopFly()
         if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
+        if flySoundConnection then flySoundConnection:Disconnect(); flySoundConnection = nil end
+        for sound, oldVolume in pairs(flyMutedSounds) do
+            if sound and sound.Parent then sound.Volume = oldVolume end
+        end
+        table.clear(flyMutedSounds)
         if flyVelocity then flyVelocity:Destroy(); flyVelocity = nil end
         if flyAttachment then flyAttachment:Destroy(); flyAttachment = nil end
         if flyAlignOrientation then flyAlignOrientation:Destroy(); flyAlignOrientation = nil end
@@ -1574,6 +1581,18 @@ elseif i == 2 then
             return
         end
         stopFly()
+        -- Silence character sounds while flying and restore their original volumes when disabled.
+        local function muteCharacterSound(instance)
+            if instance:IsA("Sound") and flyMutedSounds[instance] == nil then
+                flyMutedSounds[instance] = instance.Volume
+                instance.Volume = 0
+            end
+        end
+        for _, instance in ipairs(character:GetDescendants()) do
+            muteCharacterSound(instance)
+        end
+        flySoundConnection = character.DescendantAdded:Connect(muteCharacterSound)
+
         flyAttachment = Instance.new("Attachment")
         flyAttachment.Name = "ZenClientFlyAttachment"
         flyAttachment.Parent = root
