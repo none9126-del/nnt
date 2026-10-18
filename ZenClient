@@ -1,8 +1,3 @@
---==================================================
--- ZenClient BETA v14 - Neon Premium HUD
--- Auto Target Lock | Roblox Studio test place
--- LocalScript > StarterPlayer > StarterPlayerScripts
---==================================================
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -16,9 +11,6 @@ local playerGui = player:WaitForChild("PlayerGui")
 local oldGui = playerGui:FindFirstChild("ZenClientGui")
 if oldGui then oldGui:Destroy() end
 
---==================================================
--- CONFIG
---==================================================
 
 local CONFIG = {
 DesktopWidthScale = 0.75,
@@ -94,20 +86,15 @@ Enum.EasingDirection.InOut,
 ):Play()
 end
 
---==================================================
--- SCREEN GUI
---==================================================
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "ZenClientGui"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 100
 gui.Parent = playerGui
 
---==================================================
--- HEADER
---==================================================
 
 local header = Instance.new("Frame")
 header.Name = "ZenClientHeader"
@@ -272,9 +259,6 @@ menuButton.Parent = header
 addCorner(menuButton, 8)
 addStroke(menuButton, COLORS.Purple, 1)
 
---==================================================
--- PANELS
---==================================================
 
 local panelContainer = Instance.new("Frame")
 panelContainer.Name = "ZenClientPanels"
@@ -306,9 +290,6 @@ panelLayout.Parent = panelContainer
 local PANEL_LABELS = { "Combat", "Player", "Render", "Misc", "?" }
 local panels = {}
 
---==================================================
--- AIM LOCK STATE
---==================================================
 
 local aimEnabled = false
 local lockedTargetPart = nil
@@ -316,9 +297,6 @@ local lockWidth = 100
 local lastRowTap = 0
 local AIM_RENDER_BIND = "ZenClientAimCameraLock"
 
---==================================================
--- CREATE PANELS
---==================================================
 
 for i = 1, CONFIG.PanelCount do
 local panel = Instance.new("Frame")
@@ -332,464 +310,448 @@ panel.ZIndex = 10
 panel.Parent = panelContainer
 addCorner(panel, 8)
 
-local stroke = addStroke(panel, COLORS.PanelBorder, 1.2)  
-animateGradient(addGradient(stroke), 3 + i * 0.25)  
+local stroke = addStroke(panel, COLORS.PanelBorder, 1.2)
+animateGradient(addGradient(stroke), 3 + i * 0.25)
 
-local label = Instance.new("TextLabel")  
-label.Name = "PanelLabel"  
-label.AnchorPoint = Vector2.new(0.5, 0)  
-label.Position = UDim2.new(0.5, 0, 0, 8)  
-label.Size = UDim2.new(1, -4, 0, 22)  
-label.BackgroundTransparency = 1  
-label.Text = PANEL_LABELS[i]  
-label.TextColor3 = COLORS.LightPurple  
-label.Font = Enum.Font.GothamBold  
-label.TextSize = 10  
-label.TextTruncate = Enum.TextTruncate.AtEnd  
-label.TextXAlignment = Enum.TextXAlignment.Center  
-label.ZIndex = 13  
-label.Parent = panel  
-animateGradient(addGradient(label), 2.5 + i * 0.15)  
+local label = Instance.new("TextLabel")
+label.Name = "PanelLabel"
+label.AnchorPoint = Vector2.new(0.5, 0)
+label.Position = UDim2.new(0.5, 0, 0, 8)
+label.Size = UDim2.new(1, -4, 0, 22)
+label.BackgroundTransparency = 1
+label.Text = PANEL_LABELS[i]
+label.TextColor3 = COLORS.LightPurple
+label.Font = Enum.Font.GothamBold
+label.TextSize = 10
+label.TextTruncate = Enum.TextTruncate.AtEnd
+label.TextXAlignment = Enum.TextXAlignment.Center
+label.ZIndex = 13
+label.Parent = panel
+animateGradient(addGradient(label), 2.5 + i * 0.15)
 
-local topGlow = Instance.new("Frame")  
-topGlow.Name = "TopPurpleGlow"  
-topGlow.Position = UDim2.fromOffset(4, 34)  
-topGlow.Size = UDim2.new(1, -8, 0, 3)  
-topGlow.BackgroundColor3 = COLORS.NeonPurple  
-topGlow.BorderSizePixel = 0  
-topGlow.ZIndex = 11  
-topGlow.Parent = panel  
-addCorner(topGlow, 3)  
-animateGradient(addGradient(topGlow), 2 + i * 0.2)  
+local topGlow = Instance.new("Frame")
+topGlow.Name = "TopPurpleGlow"
+topGlow.Position = UDim2.fromOffset(4, 34)
+topGlow.Size = UDim2.new(1, -8, 0, 3)
+topGlow.BackgroundColor3 = COLORS.NeonPurple
+topGlow.BorderSizePixel = 0
+topGlow.ZIndex = 11
+topGlow.Parent = panel
+addCorner(topGlow, 3)
+animateGradient(addGradient(topGlow), 2 + i * 0.2)
 
-panels[i] = panel  
+panels[i] = panel
 
-if i == 1 then  
-    -- Aimbot row  
-    local aimbotRow = Instance.new("Frame")  
-    aimbotRow.Name = "AimbotRow"  
-    aimbotRow.AnchorPoint = Vector2.new(0.5, 0)  
-    aimbotRow.Position = UDim2.new(0.5, 0, 0, 49)  
-    aimbotRow.Size = UDim2.new(1, -12, 0, 30)  
-    aimbotRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)  
-    aimbotRow.BorderSizePixel = 0  
-    aimbotRow.ZIndex = 13  
-    aimbotRow.Parent = panel  
-    addCorner(aimbotRow, 6)  
-    local rowStroke = addStroke(aimbotRow, COLORS.Purple, 1)  
+if i == 1 then
+    local aimbotRow = Instance.new("Frame")
+    aimbotRow.Name = "AimbotRow"
+    aimbotRow.AnchorPoint = Vector2.new(0.5, 0)
+    aimbotRow.Position = UDim2.new(0.5, 0, 0, 49)
+    aimbotRow.Size = UDim2.new(1, -12, 0, 30)
+    aimbotRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
+    aimbotRow.BorderSizePixel = 0
+    aimbotRow.ZIndex = 13
+    aimbotRow.Parent = panel
+    addCorner(aimbotRow, 6)
+    local rowStroke = addStroke(aimbotRow, COLORS.Purple, 1)
 
-    local aimbotLabel = Instance.new("TextLabel")  
-    aimbotLabel.Name = "AimbotLabel"  
-    aimbotLabel.Position = UDim2.fromOffset(7, 0)  
-    aimbotLabel.Size = UDim2.new(1, -43, 1, 0)  
-    aimbotLabel.BackgroundTransparency = 1  
-    aimbotLabel.Text = "Aimbot"  
-    aimbotLabel.TextColor3 = COLORS.LightPurple  
-    aimbotLabel.Font = Enum.Font.GothamBold  
-    aimbotLabel.TextSize = 10  
-    aimbotLabel.TextXAlignment = Enum.TextXAlignment.Left  
-    aimbotLabel.ZIndex = 14  
-    aimbotLabel.Parent = aimbotRow  
+    local aimbotLabel = Instance.new("TextLabel")
+    aimbotLabel.Name = "AimbotLabel"
+    aimbotLabel.Position = UDim2.fromOffset(7, 0)
+    aimbotLabel.Size = UDim2.new(1, -43, 1, 0)
+    aimbotLabel.BackgroundTransparency = 1
+    aimbotLabel.Text = "Aimbot"
+    aimbotLabel.TextColor3 = COLORS.LightPurple
+    aimbotLabel.Font = Enum.Font.GothamBold
+    aimbotLabel.TextSize = 10
+    aimbotLabel.TextXAlignment = Enum.TextXAlignment.Left
+    aimbotLabel.ZIndex = 14
+    aimbotLabel.Parent = aimbotRow
 
-    local switchButton = Instance.new("TextButton")  
-    switchButton.Name = "AimbotSwitch"  
-    switchButton.AnchorPoint = Vector2.new(1, 0.5)  
-    switchButton.Position = UDim2.new(1, -5, 0.5, 0)  
-    switchButton.Size = UDim2.fromOffset(25, 14)  
-    switchButton.BackgroundColor3 = Color3.fromRGB(55, 35, 75)  
-    switchButton.BorderSizePixel = 0  
-    switchButton.Text = ""  
-    switchButton.AutoButtonColor = false  
-    switchButton.ZIndex = 15  
-    switchButton.Parent = aimbotRow  
-    addCorner(switchButton, 7)  
-    local switchStroke = addStroke(switchButton, COLORS.NeonPurple, 1)  
+    local switchButton = Instance.new("TextButton")
+    switchButton.Name = "AimbotSwitch"
+    switchButton.AnchorPoint = Vector2.new(1, 0.5)
+    switchButton.Position = UDim2.new(1, -5, 0.5, 0)
+    switchButton.Size = UDim2.fromOffset(25, 14)
+    switchButton.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
+    switchButton.BorderSizePixel = 0
+    switchButton.Text = ""
+    switchButton.AutoButtonColor = false
+    switchButton.ZIndex = 15
+    switchButton.Parent = aimbotRow
+    addCorner(switchButton, 7)
+    local switchStroke = addStroke(switchButton, COLORS.NeonPurple, 1)
 
-    local switchKnob = Instance.new("Frame")  
-    switchKnob.Name = "SwitchKnob"  
-    switchKnob.AnchorPoint = Vector2.new(0, 0.5)  
-    switchKnob.Position = UDim2.new(0, 2, 0.5, 0)  
-    switchKnob.Size = UDim2.fromOffset(10, 10)  
-    switchKnob.BackgroundColor3 = COLORS.LightPurple  
-    switchKnob.BorderSizePixel = 0  
-    switchKnob.ZIndex = 16  
-    switchKnob.Parent = switchButton  
-    addCorner(switchKnob, 5)  
+    local switchKnob = Instance.new("Frame")
+    switchKnob.Name = "SwitchKnob"
+    switchKnob.AnchorPoint = Vector2.new(0, 0.5)
+    switchKnob.Position = UDim2.new(0, 2, 0.5, 0)
+    switchKnob.Size = UDim2.fromOffset(10, 10)
+    switchKnob.BackgroundColor3 = COLORS.LightPurple
+    switchKnob.BorderSizePixel = 0
+    switchKnob.ZIndex = 16
+    switchKnob.Parent = switchButton
+    addCorner(switchKnob, 5)
 
-    -- Center-screen lock circle  
-    local lockCircle = Instance.new("Frame")  
-    lockCircle.Name = "AimbotLockWidthCircle"  
-    lockCircle.AnchorPoint = Vector2.new(0.5, 0.5)  
-    lockCircle.Position = UDim2.fromScale(0.5, 0.5)  
-    lockCircle.Size = UDim2.fromOffset(100, 100)  
-    lockCircle.BackgroundTransparency = 1  
-    lockCircle.BorderSizePixel = 0  
-    lockCircle.Visible = false  
-    lockCircle.ZIndex = 40  
-    lockCircle.Parent = gui  
-    addCorner(lockCircle, 100)  
-    addStroke(lockCircle, COLORS.NeonPurple, 1.5)  
+    local lockCircle = Instance.new("Frame")
+    lockCircle.Name = "AimbotLockWidthCircle"
+    lockCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+    lockCircle.Position = UDim2.fromScale(0.5, 0.5)
+    lockCircle.Size = UDim2.fromOffset(100, 100)
+    lockCircle.BackgroundTransparency = 1
+    lockCircle.BorderSizePixel = 0
+    lockCircle.Visible = false
+    lockCircle.ZIndex = 40
+    lockCircle.Parent = gui
+    addCorner(lockCircle, 100)
+    addStroke(lockCircle, COLORS.NeonPurple, 1.5)
 
-    local function updateLockCircle()  
-        local camera = workspace.CurrentCamera  
-        if not camera then return end  
-        local viewport = camera.ViewportSize  
-        local diameter = math.floor(  
-            math.min(viewport.X, viewport.Y) * lockWidth / 100  
-        )  
-        lockCircle.Size = UDim2.fromOffset(diameter, diameter)  
-        lockCircle.Position = UDim2.fromOffset(  
-            viewport.X / 2, viewport.Y / 2  
-        )  
-    end  
+    local function updateLockCircle()
+        local camera = workspace.CurrentCamera
+        if not camera then return end
+        local viewport = camera.ViewportSize
+        local diameter = math.floor(
+            math.min(viewport.X, viewport.Y) * lockWidth / 100
+        )
+        lockCircle.Size = UDim2.fromOffset(diameter, diameter)
+        lockCircle.Position = UDim2.fromOffset(
+            viewport.X / 2, viewport.Y / 2
+        )
+    end
 
-    -- Width settings overlay  
-    local settingsOverlay = Instance.new("Frame")  
-    settingsOverlay.Name = "AimbotWidthOverlay"  
-    settingsOverlay.Size = UDim2.fromScale(1, 1)  
-    settingsOverlay.BackgroundColor3 = Color3.new(0, 0, 0)  
-    settingsOverlay.BackgroundTransparency = 0.35  
-    settingsOverlay.BorderSizePixel = 0  
-    settingsOverlay.Visible = false  
-    settingsOverlay.ZIndex = 50  
-    settingsOverlay.Parent = gui  
+    local settingsOverlay = Instance.new("Frame")
+    settingsOverlay.Name = "AimbotWidthOverlay"
+    settingsOverlay.Size = UDim2.fromScale(1, 1)
+    settingsOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+    settingsOverlay.BackgroundTransparency = 0.35
+    settingsOverlay.BorderSizePixel = 0
+    settingsOverlay.Visible = false
+    settingsOverlay.ZIndex = 50
+    settingsOverlay.Parent = gui
 
-    local settingsCard = Instance.new("Frame")  
-    settingsCard.Name = "AimbotWidthCard"  
-    settingsCard.AnchorPoint = Vector2.new(0.5, 0.5)  
-    settingsCard.Position = UDim2.fromScale(0.5, 0.5)  
-    settingsCard.Size = UDim2.new(0.82, 0, 0, 190)  
-    settingsCard.BackgroundColor3 = COLORS.Background  
-    settingsCard.BorderSizePixel = 0  
-    settingsCard.ZIndex = 51  
-    settingsCard.Parent = settingsOverlay  
-    addCorner(settingsCard, 12)  
-    addStroke(settingsCard, COLORS.NeonPurple, 1.5)  
+    local settingsCard = Instance.new("Frame")
+    settingsCard.Name = "AimbotWidthCard"
+    settingsCard.AnchorPoint = Vector2.new(0.5, 0.5)
+    settingsCard.Position = UDim2.fromScale(0.5, 0.5)
+    settingsCard.Size = UDim2.new(0.82, 0, 0, 190)
+    settingsCard.BackgroundColor3 = COLORS.Background
+    settingsCard.BorderSizePixel = 0
+    settingsCard.ZIndex = 51
+    settingsCard.Parent = settingsOverlay
+    addCorner(settingsCard, 12)
+    addStroke(settingsCard, COLORS.NeonPurple, 1.5)
 
-    local sizeConstraint = Instance.new("UISizeConstraint")  
-    sizeConstraint.MaxSize = Vector2.new(360, 190)  
-    sizeConstraint.MinSize = Vector2.new(240, 190)  
-    sizeConstraint.Parent = settingsCard  
+    local sizeConstraint = Instance.new("UISizeConstraint")
+    sizeConstraint.MaxSize = Vector2.new(360, 190)
+    sizeConstraint.MinSize = Vector2.new(240, 190)
+    sizeConstraint.Parent = settingsCard
 
-    local settingsTitle = Instance.new("TextLabel")  
-    settingsTitle.Name = "SettingsTitle"  
-    settingsTitle.BackgroundTransparency = 1  
-    settingsTitle.Position = UDim2.fromOffset(14, 12)  
-    settingsTitle.Size = UDim2.new(1, -28, 0, 26)  
-    settingsTitle.Text = "Aimbot Lock Width"  
-    settingsTitle.TextColor3 = COLORS.White  
-    settingsTitle.Font = Enum.Font.GothamBold  
-    settingsTitle.TextSize = 17  
-    settingsTitle.ZIndex = 52  
-    settingsTitle.Parent = settingsCard  
+    local settingsTitle = Instance.new("TextLabel")
+    settingsTitle.Name = "SettingsTitle"
+    settingsTitle.BackgroundTransparency = 1
+    settingsTitle.Position = UDim2.fromOffset(14, 12)
+    settingsTitle.Size = UDim2.new(1, -28, 0, 26)
+    settingsTitle.Text = "Aimbot Lock Width"
+    settingsTitle.TextColor3 = COLORS.White
+    settingsTitle.Font = Enum.Font.GothamBold
+    settingsTitle.TextSize = 17
+    settingsTitle.ZIndex = 52
+    settingsTitle.Parent = settingsCard
 
-    local widthValue = Instance.new("TextLabel")  
-    widthValue.Name = "WidthValue"  
-    widthValue.BackgroundTransparency = 1  
-    widthValue.Position = UDim2.fromOffset(14, 48)  
-    widthValue.Size = UDim2.new(1, -28, 0, 24)  
-    widthValue.Text = "Width: " .. lockWidth .. "%"  
-    widthValue.TextColor3 = COLORS.LightPurple  
-    widthValue.Font = Enum.Font.GothamSemibold  
-    widthValue.TextSize = 14  
-    widthValue.TextXAlignment = Enum.TextXAlignment.Left  
-    widthValue.ZIndex = 52  
-    widthValue.Parent = settingsCard  
+    local widthValue = Instance.new("TextLabel")
+    widthValue.Name = "WidthValue"
+    widthValue.BackgroundTransparency = 1
+    widthValue.Position = UDim2.fromOffset(14, 48)
+    widthValue.Size = UDim2.new(1, -28, 0, 24)
+    widthValue.Text = "Width: " .. lockWidth .. "%"
+    widthValue.TextColor3 = COLORS.LightPurple
+    widthValue.Font = Enum.Font.GothamSemibold
+    widthValue.TextSize = 14
+    widthValue.TextXAlignment = Enum.TextXAlignment.Left
+    widthValue.ZIndex = 52
+    widthValue.Parent = settingsCard
 
-    local sliderTrack = Instance.new("TextButton")  
-    sliderTrack.Name = "WidthSliderTrack"  
-    sliderTrack.Position = UDim2.new(0, 16, 0, 83)  
-    sliderTrack.Size = UDim2.new(1, -32, 0, 12)  
-    sliderTrack.BackgroundColor3 = Color3.fromRGB(48, 31, 72)  
-    sliderTrack.BorderSizePixel = 0  
-    sliderTrack.Text = ""  
-    sliderTrack.AutoButtonColor = false  
-    sliderTrack.ZIndex = 52  
-    sliderTrack.Parent = settingsCard  
-    addCorner(sliderTrack, 6)  
+    local sliderTrack = Instance.new("TextButton")
+    sliderTrack.Name = "WidthSliderTrack"
+    sliderTrack.Position = UDim2.new(0, 16, 0, 83)
+    sliderTrack.Size = UDim2.new(1, -32, 0, 12)
+    sliderTrack.BackgroundColor3 = Color3.fromRGB(48, 31, 72)
+    sliderTrack.BorderSizePixel = 0
+    sliderTrack.Text = ""
+    sliderTrack.AutoButtonColor = false
+    sliderTrack.ZIndex = 52
+    sliderTrack.Parent = settingsCard
+    addCorner(sliderTrack, 6)
 
-    local sliderFill = Instance.new("Frame")  
-    sliderFill.Name = "SliderFill"  
-    sliderFill.Size = UDim2.new((lockWidth - 20) / 180, 0, 1, 0)  
-    sliderFill.BackgroundColor3 = COLORS.NeonPurple  
-    sliderFill.BorderSizePixel = 0  
-    sliderFill.ZIndex = 53  
-    sliderFill.Parent = sliderTrack  
-    addCorner(sliderFill, 6)  
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Name = "SliderFill"
+    sliderFill.Size = UDim2.new((lockWidth - 20) / 180, 0, 1, 0)
+    sliderFill.BackgroundColor3 = COLORS.NeonPurple
+    sliderFill.BorderSizePixel = 0
+    sliderFill.ZIndex = 53
+    sliderFill.Parent = sliderTrack
+    addCorner(sliderFill, 6)
 
-    local sliderKnob = Instance.new("Frame")  
-    sliderKnob.Name = "SliderKnob"  
-    sliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)  
-    sliderKnob.Position = UDim2.new((lockWidth - 20) / 180, 0, 0.5, 0)  
-    sliderKnob.Size = UDim2.fromOffset(18, 18)  
-    sliderKnob.BackgroundColor3 = COLORS.White  
-    sliderKnob.BorderSizePixel = 0  
-    sliderKnob.ZIndex = 54  
-    sliderKnob.Parent = sliderTrack  
-    addCorner(sliderKnob, 9)  
+    local sliderKnob = Instance.new("Frame")
+    sliderKnob.Name = "SliderKnob"
+    sliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+    sliderKnob.Position = UDim2.new((lockWidth - 20) / 180, 0, 0.5, 0)
+    sliderKnob.Size = UDim2.fromOffset(18, 18)
+    sliderKnob.BackgroundColor3 = COLORS.White
+    sliderKnob.BorderSizePixel = 0
+    sliderKnob.ZIndex = 54
+    sliderKnob.Parent = sliderTrack
+    addCorner(sliderKnob, 9)
 
-    local function setLockWidthFromX(x)  
-        local trackWidth = sliderTrack.AbsoluteSize.X  
-        if trackWidth <= 0 then return end  
-        local alpha = math.clamp(  
-            (x - sliderTrack.AbsolutePosition.X) / trackWidth, 0, 1  
-        )  
-        lockWidth = math.floor(20 + alpha * 180 + 0.5)  
-        local normalized = (lockWidth - 20) / 180  
-        widthValue.Text = "Width: " .. lockWidth .. "%"  
-        sliderFill.Size = UDim2.new(normalized, 0, 1, 0)  
-        sliderKnob.Position = UDim2.new(normalized, 0, 0.5, 0)  
-        updateLockCircle()  
-    end  
+    local function setLockWidthFromX(x)
+        local trackWidth = sliderTrack.AbsoluteSize.X
+        if trackWidth <= 0 then return end
+        local alpha = math.clamp(
+            (x - sliderTrack.AbsolutePosition.X) / trackWidth, 0, 1
+        )
+        lockWidth = math.floor(20 + alpha * 180 + 0.5)
+        local normalized = (lockWidth - 20) / 180
+        widthValue.Text = "Width: " .. lockWidth .. "%"
+        sliderFill.Size = UDim2.new(normalized, 0, 1, 0)
+        sliderKnob.Position = UDim2.new(normalized, 0, 0.5, 0)
+        updateLockCircle()
+    end
 
-    local draggingSlider = false  
+    local draggingSlider = false
 
-    sliderTrack.Activated:Connect(function()  
-        setLockWidthFromX(UserInputService:GetMouseLocation().X)  
-    end)  
+    sliderTrack.Activated:Connect(function()
+        setLockWidthFromX(UserInputService:GetMouseLocation().X)
+    end)
 
-    sliderTrack.InputBegan:Connect(function(input)  
-        if input.UserInputType == Enum.UserInputType.MouseButton1  
-            or input.UserInputType == Enum.UserInputType.Touch then  
-            draggingSlider = true  
-            setLockWidthFromX(input.Position.X)  
-        end  
-    end)  
+    sliderTrack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            draggingSlider = true
+            setLockWidthFromX(input.Position.X)
+        end
+    end)
 
-    UserInputService.InputChanged:Connect(function(input)  
-        if draggingSlider and (  
-            input.UserInputType == Enum.UserInputType.MouseMovement  
-            or input.UserInputType == Enum.UserInputType.Touch  
-        ) then  
-            setLockWidthFromX(input.Position.X)  
-        end  
-    end)  
+    UserInputService.InputChanged:Connect(function(input)
+        if draggingSlider and (
+            input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch
+        ) then
+            setLockWidthFromX(input.Position.X)
+        end
+    end)
 
-    UserInputService.InputEnded:Connect(function(input)  
-        if input.UserInputType == Enum.UserInputType.MouseButton1  
-            or input.UserInputType == Enum.UserInputType.Touch then  
-            draggingSlider = false  
-        end  
-    end)  
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            draggingSlider = false
+        end
+    end)
 
-    local okButton = Instance.new("TextButton")  
-    okButton.Name = "ConfirmWidthButton"  
-    okButton.AnchorPoint = Vector2.new(0.5, 1)  
-    okButton.Position = UDim2.new(0.5, 0, 1, -12)  
-    okButton.Size = UDim2.new(1, -32, 0, 34)  
-    okButton.BackgroundColor3 = COLORS.Purple  
-    okButton.BorderSizePixel = 0  
-    okButton.Text = "OK"  
-    okButton.TextColor3 = COLORS.White  
-    okButton.Font = Enum.Font.GothamBold  
-    okButton.TextSize = 14  
-    okButton.ZIndex = 52  
-    okButton.Parent = settingsCard  
-    addCorner(okButton, 8)  
-    addStroke(okButton, COLORS.NeonPurple, 1)  
+    local okButton = Instance.new("TextButton")
+    okButton.Name = "ConfirmWidthButton"
+    okButton.AnchorPoint = Vector2.new(0.5, 1)
+    okButton.Position = UDim2.new(0.5, 0, 1, -12)
+    okButton.Size = UDim2.new(1, -32, 0, 34)
+    okButton.BackgroundColor3 = COLORS.Purple
+    okButton.BorderSizePixel = 0
+    okButton.Text = "OK"
+    okButton.TextColor3 = COLORS.White
+    okButton.Font = Enum.Font.GothamBold
+    okButton.TextSize = 14
+    okButton.ZIndex = 52
+    okButton.Parent = settingsCard
+    addCorner(okButton, 8)
+    addStroke(okButton, COLORS.NeonPurple, 1)
 
-    okButton.Activated:Connect(function()  
-        settingsOverlay.Visible = false  
-        aimbotRow:SetAttribute("LockWidthPercent", lockWidth)  
-        updateLockCircle()  
-    end)  
+    okButton.Activated:Connect(function()
+        settingsOverlay.Visible = false
+        aimbotRow:SetAttribute("LockWidthPercent", lockWidth)
+        updateLockCircle()
+    end)
 
-    aimbotRow.InputBegan:Connect(function(input)  
-        if input.UserInputType ~= Enum.UserInputType.MouseButton1  
-            and input.UserInputType ~= Enum.UserInputType.Touch then  
-            return  
-        end  
-        local now = os.clock()  
-        if now - lastRowTap <= 0.35 then  
-            settingsOverlay.Visible = true  
-            updateLockCircle()  
-            lastRowTap = 0  
-        else  
-            lastRowTap = now  
-        end  
-    end)  
-
-    --==================================================  
-    -- AUTO TARGET SELECTION  
-    -- เลือกเป้าหมายที่ใกล้จุดกลางหน้าจอที่สุด  
-    -- เมื่อล็อกแล้ว จะติดตามเป้าหมายเดิมแม้ออกนอกวง  
-    --==================================================  
-
-    local function getTargetPart(character)  
-        if not character or character == player.Character then  
-            return nil  
-        end  
-
-        local humanoid = character:FindFirstChildOfClass("Humanoid")  
-        local root = character:FindFirstChild("HumanoidRootPart")  
-
-        if humanoid and humanoid.Health > 0  
-            and root and root:IsA("BasePart") then  
-            return root  
-        end  
-
-        return nil  
-    end  
-
-    local function findClosestToScreenCenter()  
-        local camera = workspace.CurrentCamera  
-        if not camera then return nil end  
-
-        local viewport = camera.ViewportSize  
-        local center = Vector2.new(viewport.X / 2, viewport.Y / 2)  
-        local radius = math.min(viewport.X, viewport.Y) * lockWidth / 200  
-
-        local bestPart = nil  
-        local bestDistance = math.huge  
-
-        for _, otherPlayer in ipairs(Players:GetPlayers()) do  
-            if otherPlayer ~= player then  
-                local character = otherPlayer.Character  
-                local part = getTargetPart(character)  
-
-                if part then  
-                    local point, onScreen =  
-                        camera:WorldToViewportPoint(part.Position)  
-
-                    if onScreen and point.Z > 0 then  
-                        local screenPos = Vector2.new(point.X, point.Y)  
-                        local distance = (screenPos - center).Magnitude  
-
-                        if distance <= radius and distance < bestDistance then  
-                            bestDistance = distance  
-                            bestPart = part  
-                        end  
-                    end  
-                end  
-            end  
-        end  
-
-        return bestPart  
-    end  
-
-    local function stopAimLock()  
-        aimEnabled = false  
-        lockedTargetPart = nil  
-        lockCircle.Visible = false  
-        RunService:UnbindFromRenderStep(AIM_RENDER_BIND)  
-
-        switchButton.BackgroundColor3 = Color3.fromRGB(55, 35, 75)  
-        switchKnob.Position = UDim2.new(0, 2, 0.5, 0)  
-        switchKnob.BackgroundColor3 = COLORS.LightPurple  
-        switchStroke.Color = COLORS.NeonPurple  
-        rowStroke.Color = COLORS.Purple  
-        aimbotLabel.TextColor3 = COLORS.LightPurple  
-    end  
-
-    local function startAimLock()  
-        local firstTarget = findClosestToScreenCenter()  
-
-        if not firstTarget then  
-            -- ไม่มีเป้าหมายในวง: เปิดวงไว้และรอให้มีเป้าหมาย  
-            aimEnabled = true  
-            lockedTargetPart = nil  
-            lockCircle.Visible = true  
-            updateLockCircle()  
-        else  
-            aimEnabled = true  
-            lockedTargetPart = firstTarget  
-            lockCircle.Visible = true  
-            updateLockCircle()  
-        end  
-
-        RunService:UnbindFromRenderStep(AIM_RENDER_BIND)  
-
-        RunService:BindToRenderStep(  
-            AIM_RENDER_BIND,  
-            Enum.RenderPriority.Camera.Value + 1,  
-            function()  
-                if not aimEnabled then  
-                    RunService:UnbindFromRenderStep(AIM_RENDER_BIND)  
-                    return  
-                end  
-
-                local camera = workspace.CurrentCamera  
-                if not camera then return end  
-
-                updateLockCircle()  
-
-                -- หากยังไม่มีเป้าหมาย ให้ค้นหาใหม่จากวงกลางหน้าจอ  
-                if not lockedTargetPart  
-                    or not lockedTargetPart.Parent  
-                    or not lockedTargetPart:IsDescendantOf(workspace) then  
-                    lockedTargetPart = findClosestToScreenCenter()  
-                end  
-
-                if not lockedTargetPart then  
-                    return  
-                end  
-
-                local character =  
-                    lockedTargetPart:FindFirstAncestorOfClass("Model")  
-                local humanoid = character  
-                    and character:FindFirstChildOfClass("Humanoid")  
-
-                if not humanoid or humanoid.Health <= 0 then  
-                    lockedTargetPart = nil  
-                    return  
-                end  
-
-                -- ล็อกเป้าหมายเดิมต่อแม้เดินออกนอกวงกลางจอ  
-                camera.CFrame = CFrame.lookAt(  
-                    camera.CFrame.Position,  
-                    lockedTargetPart.Position  
-                )  
-            end  
-        )  
-    end  
-
-    switchButton.Activated:Connect(function()  
-        if aimEnabled then  
-            stopAimLock()  
-        else  
-            startAimLock()  
-        end  
-
-        local enabled = aimEnabled  
-
-        TweenService:Create(  
-            switchButton,  
-            TweenInfo.new(0.16, Enum.EasingStyle.Quad,  
-                Enum.EasingDirection.Out),  
-            {  
-                BackgroundColor3 = enabled  
-                    and Color3.fromRGB(100, 35, 175)  
-                    or Color3.fromRGB(55, 35, 75)  
-            }  
-        ):Play()  
-
-        TweenService:Create(  
-            switchKnob,  
-            TweenInfo.new(0.16, Enum.EasingStyle.Quad,  
-                Enum.EasingDirection.Out),  
-            {  
-                Position = enabled  
-                    and UDim2.new(1, -12, 0.5, 0)  
-                    or UDim2.new(0, 2, 0.5, 0),  
-                BackgroundColor3 = enabled  
-                    and COLORS.White or COLORS.LightPurple,  
-            }  
-        ):Play()  
-
-        switchStroke.Color =  
-            enabled and COLORS.LightPurple or COLORS.NeonPurple  
-        rowStroke.Color =  
-            enabled and COLORS.NeonPurple or COLORS.Purple  
-        aimbotLabel.TextColor3 =  
-            enabled and COLORS.White or COLORS.LightPurple  
-    end)  
+    aimbotRow.InputBegan:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1
+            and input.UserInputType ~= Enum.UserInputType.Touch then
+            return
+        end
+        local now = os.clock()
+        if now - lastRowTap <= 0.35 then
+            settingsOverlay.Visible = true
+            updateLockCircle()
+            lastRowTap = 0
+        else
+            lastRowTap = now
+        end
+    end)
 
 
-    --==================================================
-    -- HITBOX ROW (VISUAL ONLY)
-    -- Double-tap the row name to open size settings.
-    -- Does not change character parts or hit detection.
-    --==================================================
+    local function getTargetPart(character)
+        if not character or character == player.Character then
+            return nil
+        end
+
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        local root = character:FindFirstChild("HumanoidRootPart")
+
+        if humanoid and humanoid.Health > 0
+            and root and root:IsA("BasePart") then
+            return root
+        end
+
+        return nil
+    end
+
+    local function findClosestToScreenCenter()
+        local camera = workspace.CurrentCamera
+        if not camera then return nil end
+
+        local viewport = camera.ViewportSize
+        local center = Vector2.new(viewport.X / 2, viewport.Y / 2)
+        local radius = math.min(viewport.X, viewport.Y) * lockWidth / 200
+
+        local bestPart = nil
+        local bestDistance = math.huge
+
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do
+            if otherPlayer ~= player then
+                local character = otherPlayer.Character
+                local part = getTargetPart(character)
+
+                if part then
+                    local point, onScreen =
+                        camera:WorldToViewportPoint(part.Position)
+
+                    if onScreen and point.Z > 0 then
+                        local screenPos = Vector2.new(point.X, point.Y)
+                        local distance = (screenPos - center).Magnitude
+
+                        if distance <= radius and distance < bestDistance then
+                            bestDistance = distance
+                            bestPart = part
+                        end
+                    end
+                end
+            end
+        end
+
+        return bestPart
+    end
+
+    local function stopAimLock()
+        aimEnabled = false
+        lockedTargetPart = nil
+        lockCircle.Visible = false
+        RunService:UnbindFromRenderStep(AIM_RENDER_BIND)
+
+        switchButton.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
+        switchKnob.Position = UDim2.new(0, 2, 0.5, 0)
+        switchKnob.BackgroundColor3 = COLORS.LightPurple
+        switchStroke.Color = COLORS.NeonPurple
+        rowStroke.Color = COLORS.Purple
+        aimbotLabel.TextColor3 = COLORS.LightPurple
+    end
+
+    local function startAimLock()
+        local firstTarget = findClosestToScreenCenter()
+
+        if not firstTarget then
+            aimEnabled = true
+            lockedTargetPart = nil
+            lockCircle.Visible = true
+            updateLockCircle()
+        else
+            aimEnabled = true
+            lockedTargetPart = firstTarget
+            lockCircle.Visible = true
+            updateLockCircle()
+        end
+
+        RunService:UnbindFromRenderStep(AIM_RENDER_BIND)
+
+        RunService:BindToRenderStep(
+            AIM_RENDER_BIND,
+            Enum.RenderPriority.Camera.Value + 1,
+            function()
+                if not aimEnabled then
+                    RunService:UnbindFromRenderStep(AIM_RENDER_BIND)
+                    return
+                end
+
+                local camera = workspace.CurrentCamera
+                if not camera then return end
+
+                updateLockCircle()
+
+                if not lockedTargetPart
+                    or not lockedTargetPart.Parent
+                    or not lockedTargetPart:IsDescendantOf(workspace) then
+                    lockedTargetPart = findClosestToScreenCenter()
+                end
+
+                if not lockedTargetPart then
+                    return
+                end
+
+                local character =
+                    lockedTargetPart:FindFirstAncestorOfClass("Model")
+                local humanoid = character
+                    and character:FindFirstChildOfClass("Humanoid")
+
+                if not humanoid or humanoid.Health <= 0 then
+                    lockedTargetPart = nil
+                    return
+                end
+
+                camera.CFrame = CFrame.lookAt(
+                    camera.CFrame.Position,
+                    lockedTargetPart.Position
+                )
+            end
+        )
+    end
+
+    switchButton.Activated:Connect(function()
+        if aimEnabled then
+            stopAimLock()
+        else
+            startAimLock()
+        end
+
+        local enabled = aimEnabled
+
+        TweenService:Create(
+            switchButton,
+            TweenInfo.new(0.16, Enum.EasingStyle.Quad,
+                Enum.EasingDirection.Out),
+            {
+                BackgroundColor3 = enabled
+                    and Color3.fromRGB(100, 35, 175)
+                    or Color3.fromRGB(55, 35, 75)
+            }
+        ):Play()
+
+        TweenService:Create(
+            switchKnob,
+            TweenInfo.new(0.16, Enum.EasingStyle.Quad,
+                Enum.EasingDirection.Out),
+            {
+                Position = enabled
+                    and UDim2.new(1, -12, 0.5, 0)
+                    or UDim2.new(0, 2, 0.5, 0),
+                BackgroundColor3 = enabled
+                    and COLORS.White or COLORS.LightPurple,
+            }
+        ):Play()
+
+        switchStroke.Color =
+            enabled and COLORS.LightPurple or COLORS.NeonPurple
+        rowStroke.Color =
+            enabled and COLORS.NeonPurple or COLORS.Purple
+        aimbotLabel.TextColor3 =
+            enabled and COLORS.White or COLORS.LightPurple
+    end)
+
+
     local hitboxEnabled = false
     local hitboxSizePercent = 100
     local hitboxAdornments = {}
@@ -845,7 +807,6 @@ if i == 1 then
     hitboxSwitchKnob.Parent = hitboxSwitch
     addCorner(hitboxSwitchKnob, 5)
 
-    -- Settings overlay follows the same style as Aimbot settings.
     local hitboxOverlay = Instance.new("Frame")
     hitboxOverlay.Name = "HitboxSizeOverlay"
     hitboxOverlay.Size = UDim2.fromScale(1, 1)
@@ -1114,11 +1075,6 @@ if i == 1 then
     end)
 
 elseif i == 2 then
-    --==================================================
-    -- PLAYER SPEED ROW
-    -- Tap the switch to enable/disable; double-tap the name to edit.
-    -- Applies only to the local player's character in the experience.
-    --==================================================
     local speedEnabled = false
     local speedValue = 32
     local savedWalkSpeed = 16
@@ -1389,10 +1345,6 @@ elseif i == 2 then
         end
     end)
 
-    --==================================================
-    -- FLY ROW (Roblox Studio test place)
-    -- Double-tap Fly to adjust flight speed.
-    --==================================================
     local flyEnabled = false
     local flySpeed = 40
     local lastFlyRowTap = 0
@@ -1405,7 +1357,8 @@ elseif i == 2 then
     flyRow.Size = UDim2.new(1, -12, 0, 30)
     flyRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
     flyRow.BorderSizePixel = 0
-    flyRow.ZIndex = 13
+    flyRow.ZIndex = 30
+    flyRow.Active = true
     flyRow.Parent = panel
     addCorner(flyRow, 6)
     local flyRowStroke = addStroke(flyRow, COLORS.Purple, 1)
@@ -1413,7 +1366,7 @@ elseif i == 2 then
     local flyLabel = Instance.new("TextButton")
     flyLabel.Name = "FlyLabel"
     flyLabel.Position = UDim2.fromOffset(7, 0)
-    flyLabel.Size = UDim2.new(1, -43, 1, 0)
+    flyLabel.Size = UDim2.new(1, -52, 1, 0)
     flyLabel.BackgroundTransparency = 1
     flyLabel.Text = "Fly"
     flyLabel.TextColor3 = COLORS.LightPurple
@@ -1421,19 +1374,23 @@ elseif i == 2 then
     flyLabel.TextSize = 10
     flyLabel.TextXAlignment = Enum.TextXAlignment.Left
     flyLabel.AutoButtonColor = false
-    flyLabel.ZIndex = 14
+    flyLabel.ZIndex = 31
+    flyLabel.Active = true
+    flyLabel.Selectable = true
     flyLabel.Parent = flyRow
 
     local flySwitch = Instance.new("TextButton")
     flySwitch.Name = "FlySwitch"
     flySwitch.AnchorPoint = Vector2.new(1, 0.5)
     flySwitch.Position = UDim2.new(1, -5, 0.5, 0)
-    flySwitch.Size = UDim2.fromOffset(25, 14)
+    flySwitch.Size = UDim2.fromOffset(38, 22)
     flySwitch.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
     flySwitch.BorderSizePixel = 0
     flySwitch.Text = ""
     flySwitch.AutoButtonColor = false
-    flySwitch.ZIndex = 15
+    flySwitch.ZIndex = 32
+    flySwitch.Active = true
+    flySwitch.Selectable = true
     flySwitch.Parent = flyRow
     addCorner(flySwitch, 7)
     local flySwitchStroke = addStroke(flySwitch, COLORS.NeonPurple, 1)
@@ -1441,11 +1398,12 @@ elseif i == 2 then
     local flySwitchKnob = Instance.new("Frame")
     flySwitchKnob.Name = "SwitchKnob"
     flySwitchKnob.AnchorPoint = Vector2.new(0, 0.5)
-    flySwitchKnob.Position = UDim2.new(0, 2, 0.5, 0)
-    flySwitchKnob.Size = UDim2.fromOffset(10, 10)
+    flySwitchKnob.Position = UDim2.new(0, 3, 0.5, 0)
+    flySwitchKnob.Size = UDim2.fromOffset(16, 16)
     flySwitchKnob.BackgroundColor3 = COLORS.LightPurple
     flySwitchKnob.BorderSizePixel = 0
-    flySwitchKnob.ZIndex = 16
+    flySwitchKnob.ZIndex = 33
+    flySwitchKnob.Active = false
     flySwitchKnob.Parent = flySwitch
     addCorner(flySwitchKnob, 5)
 
@@ -1544,9 +1502,6 @@ elseif i == 2 then
     end
 
     local flyDraggingSlider = false
-    flySlider.Activated:Connect(function()
-        setFlySpeedFromX(UserInputService:GetMouseLocation().X)
-    end)
     flySlider.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             flyDraggingSlider = true
@@ -1568,432 +1523,109 @@ elseif i == 2 then
     flyOkButton.Name = "ConfirmFlySpeedButton"
     flyOkButton.AnchorPoint = Vector2.new(0.5, 1)
     flyOkButton.Position = UDim2.new(0.5, 0, 1, -12)
---==================================================
--- ZenClient BETA - FLY SYSTEM (BUTTON FIX)
--- ใช้ใน Roblox Studio ของตัวเอง
--- ต้องมี panel, gui, COLORS, addCorner, addStroke
--- player, RunService, TweenService, UserInputService
---==================================================
+    flyOkButton.Size = UDim2.new(1, -32, 0, 34)
+    flyOkButton.BackgroundColor3 = COLORS.Purple
+    flyOkButton.BorderSizePixel = 0
+    flyOkButton.Text = "OK"
+    flyOkButton.TextColor3 = COLORS.White
+    flyOkButton.Font = Enum.Font.GothamBold
+    flyOkButton.TextSize = 14
+    flyOkButton.ZIndex = 82
+    flyOkButton.Parent = flyCard
+    addCorner(flyOkButton, 8)
+    addStroke(flyOkButton, COLORS.NeonPurple, 1)
+    flyOkButton.Activated:Connect(function() flyOverlay.Visible = false end)
 
-local flyEnabled = false
-local flySpeed = 40
-local minFlySpeed = 16
-local maxFlySpeed = 100
+    flyLabel.Activated:Connect(function()
+        local now = os.clock()
+        if now - lastFlyRowTap <= 0.35 then
+            flyOverlay.Visible = true
+            lastFlyRowTap = 0
+        else
+            lastFlyRowTap = now
+        end
+    end)
 
-local flyConnection
-local flyAttachment
-local flyVelocity
-local lastFlyRowTap = 0
-
--- ลบ Fly UI เก่าหากมี
-local oldFlyRow = panel:FindFirstChild("FlyRow")
-if oldFlyRow then oldFlyRow:Destroy() end
-
-local oldFlyOverlay = gui:FindFirstChild("FlySettingsOverlay")
-if oldFlyOverlay then oldFlyOverlay:Destroy() end
-
---==================================================
--- FLY ROW
---==================================================
-
-local flyRow = Instance.new("Frame")
-flyRow.Name = "FlyRow"
-flyRow.Position = UDim2.new(0.5, 0, 0, 83)
-flyRow.Size = UDim2.new(1, -20, 0, 30)
-flyRow.AnchorPoint = Vector2.new(0.5, 0)
-flyRow.BackgroundColor3 = Color3.fromRGB(25, 18, 38)
-flyRow.BorderSizePixel = 0
-flyRow.Active = true
-flyRow.ZIndex = 10
-flyRow.Parent = panel
-
-addCorner(flyRow, 8)
-local flyRowStroke = addStroke(flyRow, COLORS.Purple, 1)
-
-local flyLabel = Instance.new("TextButton")
-flyLabel.Name = "FlyLabel"
-flyLabel.Position = UDim2.new(0, 10, 0, 0)
-flyLabel.Size = UDim2.new(1, -65, 1, 0)
-flyLabel.BackgroundTransparency = 1
-flyLabel.BorderSizePixel = 0
-flyLabel.Text = "Fly"
-flyLabel.TextColor3 = COLORS.LightPurple
-flyLabel.Font = Enum.Font.GothamBold
-flyLabel.TextSize = 13
-flyLabel.TextXAlignment = Enum.TextXAlignment.Left
-flyLabel.AutoButtonColor = false
-flyLabel.Active = true
-flyLabel.Selectable = true
-flyLabel.ZIndex = 12
-flyLabel.Parent = flyRow
-
---==================================================
--- SWITCH
---==================================================
-
-local flySwitch = Instance.new("TextButton")
-flySwitch.Name = "FlySwitch"
-flySwitch.AnchorPoint = Vector2.new(1, 0.5)
-flySwitch.Position = UDim2.new(1, -7, 0.5, 0)
-flySwitch.Size = UDim2.new(0, 38, 0, 20)
-flySwitch.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
-flySwitch.BorderSizePixel = 0
-flySwitch.Text = ""
-flySwitch.AutoButtonColor = false
-flySwitch.Active = true
-flySwitch.Selectable = true
-flySwitch.ZIndex = 13
-flySwitch.Parent = flyRow
-
-addCorner(flySwitch, 10)
-local flySwitchStroke = addStroke(flySwitch, COLORS.NeonPurple, 1)
-
-local flySwitchKnob = Instance.new("Frame")
-flySwitchKnob.Name = "Knob"
-flySwitchKnob.Position = UDim2.new(0, 2, 0.5, 0)
-flySwitchKnob.AnchorPoint = Vector2.new(0, 0.5)
-flySwitchKnob.Size = UDim2.new(0, 16, 0, 16)
-flySwitchKnob.BackgroundColor3 = COLORS.LightPurple
-flySwitchKnob.BorderSizePixel = 0
-flySwitchKnob.ZIndex = 14
-flySwitchKnob.Parent = flySwitch
-
-addCorner(flySwitchKnob, 8)
-
---==================================================
--- SETTINGS OVERLAY
---==================================================
-
-local flyOverlay = Instance.new("Frame")
-flyOverlay.Name = "FlySettingsOverlay"
-flyOverlay.Size = UDim2.fromScale(1, 1)
-flyOverlay.Position = UDim2.fromScale(0, 0)
-flyOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
-flyOverlay.BackgroundTransparency = 0.35
-flyOverlay.BorderSizePixel = 0
-flyOverlay.Visible = false
-flyOverlay.Active = true
-flyOverlay.ZIndex = 80
-flyOverlay.Parent = gui
-
-local flyCard = Instance.new("Frame")
-flyCard.Name = "FlySettingsCard"
-flyCard.AnchorPoint = Vector2.new(0.5, 0.5)
-flyCard.Position = UDim2.fromScale(0.5, 0.5)
-flyCard.Size = UDim2.new(0, 270, 0, 150)
-flyCard.BackgroundColor3 = Color3.fromRGB(23, 17, 35)
-flyCard.BorderSizePixel = 0
-flyCard.Active = true
-flyCard.ZIndex = 81
-flyCard.Parent = flyOverlay
-
-addCorner(flyCard, 12)
-addStroke(flyCard, COLORS.NeonPurple, 1.5)
-
-local flyTitle = Instance.new("TextLabel")
-flyTitle.Size = UDim2.new(1, -20, 0, 28)
-flyTitle.Position = UDim2.new(0, 10, 0, 8)
-flyTitle.BackgroundTransparency = 1
-flyTitle.Text = "FLY SETTINGS"
-flyTitle.TextColor3 = COLORS.White
-flyTitle.Font = Enum.Font.GothamBold
-flyTitle.TextSize = 15
-flyTitle.ZIndex = 82
-flyTitle.Parent = flyCard
-
-local flyValueLabel = Instance.new("TextLabel")
-flyValueLabel.Position = UDim2.new(0, 15, 0, 42)
-flyValueLabel.Size = UDim2.new(1, -30, 0, 20)
-flyValueLabel.BackgroundTransparency = 1
-flyValueLabel.TextColor3 = COLORS.LightPurple
-flyValueLabel.Font = Enum.Font.Gotham
-flyValueLabel.TextSize = 12
-flyValueLabel.TextXAlignment = Enum.TextXAlignment.Left
-flyValueLabel.ZIndex = 82
-flyValueLabel.Parent = flyCard
-
-local flySlider = Instance.new("TextButton")
-flySlider.Name = "FlySpeedSlider"
-flySlider.Position = UDim2.new(0, 15, 0, 70)
-flySlider.Size = UDim2.new(1, -30, 0, 12)
-flySlider.BackgroundColor3 = Color3.fromRGB(55, 40, 70)
-flySlider.BorderSizePixel = 0
-flySlider.Text = ""
-flySlider.AutoButtonColor = false
-flySlider.Active = true
-flySlider.ZIndex = 82
-flySlider.Parent = flyCard
-
-addCorner(flySlider, 6)
-
-local flySliderFill = Instance.new("Frame")
-flySliderFill.Size = UDim2.new(0, 0, 1, 0)
-flySliderFill.BackgroundColor3 = COLORS.Purple
-flySliderFill.BorderSizePixel = 0
-flySliderFill.ZIndex = 83
-flySliderFill.Parent = flySlider
-
-addCorner(flySliderFill, 6)
-
-local flySliderKnob = Instance.new("Frame")
-flySliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-flySliderKnob.Position = UDim2.new(0, 0, 0.5, 0)
-flySliderKnob.Size = UDim2.new(0, 16, 0, 16)
-flySliderKnob.BackgroundColor3 = COLORS.White
-flySliderKnob.BorderSizePixel = 0
-flySliderKnob.ZIndex = 84
-flySliderKnob.Parent = flySlider
-
-addCorner(flySliderKnob, 8)
-
-local function setFlySpeedFromX(x)
-    local width = flySlider.AbsoluteSize.X
-    if width <= 0 then return end
-
-    local alpha = math.clamp(
-        (x - flySlider.AbsolutePosition.X) / width,
-        0,
-        1
-    )
-
-    flySpeed = math.floor(
-        minFlySpeed + (maxFlySpeed - minFlySpeed) * alpha
-    )
-
-    flyValueLabel.Text = "Speed: " .. flySpeed
-    flySliderFill.Size = UDim2.new(alpha, 0, 1, 0)
-    flySliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
-end
-
-setFlySpeedFromX(
-    flySlider.AbsolutePosition.X
-    + flySlider.AbsoluteSize.X
-    * ((flySpeed - minFlySpeed) / (maxFlySpeed - minFlySpeed))
-)
-
-local flyDraggingSlider = false
-
-flySlider.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        flyDraggingSlider = true
-        setFlySpeedFromX(input.Position.X)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if flyDraggingSlider
-        and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
-        setFlySpeedFromX(input.Position.X)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        flyDraggingSlider = false
-    end
-end)
-
-local flyOkButton = Instance.new("TextButton")
-flyOkButton.Name = "ConfirmFlySpeedButton"
-flyOkButton.AnchorPoint = Vector2.new(0.5, 1)
-flyOkButton.Position = UDim2.new(0.5, 0, 1, -12)
-flyOkButton.Size = UDim2.new(1, -32, 0, 34)
-flyOkButton.BackgroundColor3 = COLORS.Purple
-flyOkButton.BorderSizePixel = 0
-flyOkButton.Text = "OK"
-flyOkButton.TextColor3 = COLORS.White
-flyOkButton.Font = Enum.Font.GothamBold
-flyOkButton.TextSize = 14
-flyOkButton.ZIndex = 85
-flyOkButton.Parent = flyCard
-
-addCorner(flyOkButton, 8)
-addStroke(flyOkButton, COLORS.NeonPurple, 1)
-
-flyOkButton.Activated:Connect(function()
-    flyOverlay.Visible = false
-end)
-
---==================================================
--- STOP FLY
---==================================================
-
-local function stopFly()
-    if flyConnection then
-        flyConnection:Disconnect()
-        flyConnection = nil
+    local function stopFly()
+        if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
+        if flyVelocity then flyVelocity:Destroy(); flyVelocity = nil end
+        if flyAttachment then flyAttachment:Destroy(); flyAttachment = nil end
+        local character = player.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid.PlatformStand = false end
     end
 
-    if flyVelocity then
-        flyVelocity:Destroy()
-        flyVelocity = nil
-    end
-
-    if flyAttachment then
-        flyAttachment:Destroy()
-        flyAttachment = nil
-    end
-
-    local character = player.Character
-    local humanoid = character
-        and character:FindFirstChildOfClass("Humanoid")
-
-    if humanoid then
-        humanoid.PlatformStand = false
-    end
-end
-
---==================================================
--- START FLY
---==================================================
-
-local function startFly()
-    if not RunService:IsStudio() then
-        flyEnabled = false
-        warn("[ZenClient] Fly is limited to Studio test places.")
-        return
-    end
-
-    local character = player.Character
-    local root = character
-        and character:FindFirstChild("HumanoidRootPart")
-    local humanoid = character
-        and character:FindFirstChildOfClass("Humanoid")
-
-    if not root or not humanoid then
-        flyEnabled = false
-        return
-    end
-
-    stopFly()
-
-    flyAttachment = Instance.new("Attachment")
-    flyAttachment.Name = "ZenClientFlyAttachment"
-    flyAttachment.Parent = root
-
-    flyVelocity = Instance.new("LinearVelocity")
-    flyVelocity.Name = "ZenClientFlyVelocity"
-    flyVelocity.Attachment0 = flyAttachment
-    flyVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
-    flyVelocity.VelocityConstraintMode =
-        Enum.VelocityConstraintMode.Vector
-    flyVelocity.MaxForce = math.huge
-    flyVelocity.VectorVelocity = Vector3.zero
-    flyVelocity.Parent = root
-
-    humanoid.PlatformStand = true
-
-    flyConnection = RunService.RenderStepped:Connect(function()
-        if not flyEnabled or not root.Parent then
-            stopFly()
+    local function startFly()
+        if not RunService:IsStudio() then
+            flyEnabled = false
             return
         end
-
-        local move = humanoid.MoveDirection * flySpeed
-        local vertical = 0
-
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-            vertical += flySpeed
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if not root or not humanoid then
+            flyEnabled = false
+            return
         end
-
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-            vertical -= flySpeed
-        end
-
-        flyVelocity.VectorVelocity =
-            Vector3.new(move.X, vertical, move.Z)
-    end)
-end
-
---==================================================
--- ENABLE / DISABLE
---==================================================
-
-local function setFlyEnabled(enabled)
-    if enabled and not RunService:IsStudio() then
-        flyEnabled = false
-        warn("[ZenClient] Fly is Studio-only.")
-    else
-        flyEnabled = enabled
-    end
-
-    if flyEnabled then
-        startFly()
-    else
         stopFly()
+        flyAttachment = Instance.new("Attachment")
+        flyAttachment.Name = "ZenClientFlyAttachment"
+        flyAttachment.Parent = root
+        flyVelocity = Instance.new("LinearVelocity")
+        flyVelocity.Name = "ZenClientFlyVelocity"
+        flyVelocity.Attachment0 = flyAttachment
+        flyVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
+        flyVelocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+        flyVelocity.MaxForce = math.huge
+        flyVelocity.VectorVelocity = Vector3.zero
+        flyVelocity.Parent = root
+        humanoid.PlatformStand = true
+        flyConnection = RunService.RenderStepped:Connect(function()
+            if not flyEnabled or not root.Parent then stopFly(); return end
+            local camera = workspace.CurrentCamera
+            if not camera then return end
+            local move = humanoid.MoveDirection * flySpeed
+            local vertical = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) or UserInputService:IsKeyDown(Enum.KeyCode.ButtonA) then vertical += flySpeed end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.ButtonB) then vertical -= flySpeed end
+            flyVelocity.VectorVelocity = Vector3.new(move.X, vertical, move.Z)
+        end)
     end
 
-    local active = flyEnabled
+    local function setFlyEnabled(enabled)
+        flyEnabled = enabled
+        if enabled then startFly() else stopFly() end
+        local active = flyEnabled
+        TweenService:Create(flySwitch, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = active and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
+        }):Play()
+        TweenService:Create(flySwitchKnob, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = active and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+            BackgroundColor3 = active and COLORS.White or COLORS.LightPurple
+        }):Play()
+        flySwitchStroke.Color = active and COLORS.LightPurple or COLORS.NeonPurple
+        flyRowStroke.Color = active and COLORS.NeonPurple or COLORS.Purple
+        flyLabel.TextColor3 = active and COLORS.White or COLORS.LightPurple
+        flyLabel.Text = active and "Fly: ON" or "Fly"
+    end
+    flySwitch.Activated:Connect(function()
+        setFlyEnabled(not flyEnabled)
+    end)
+    player.CharacterAdded:Connect(function(character)
+        if flyEnabled then
+            local humanoid = character:WaitForChild("Humanoid", 5)
+            local root = character:WaitForChild("HumanoidRootPart", 5)
+            if humanoid and root and flyEnabled then
+                task.wait(0.2)
+                startFly()
+            end
+        end
+    end)
 
-    TweenService:Create(
-        flySwitch,
-        TweenInfo.new(0.16),
-        {
-            BackgroundColor3 = active
-                and Color3.fromRGB(100, 35, 175)
-                or Color3.fromRGB(55, 35, 75)
-        }
-    ):Play()
-
-    TweenService:Create(
-        flySwitchKnob,
-        TweenInfo.new(0.16),
-        {
-            Position = active
-                and UDim2.new(1, -18, 0.5, 0)
-                or UDim2.new(0, 2, 0.5, 0),
-            BackgroundColor3 = active
-                and COLORS.White
-                or COLORS.LightPurple
-        }
-    ):Play()
-
-    flySwitchStroke.Color = active
-        and COLORS.LightPurple or COLORS.NeonPurple
-
-    flyRowStroke.Color = active
-        and COLORS.NeonPurple or COLORS.Purple
-
-    flyLabel.TextColor3 = active
-        and COLORS.White or COLORS.LightPurple
-
-    flyLabel.Text = active and "Fly: ON" or "Fly"
 end
 
---==================================================
--- BUTTON EVENTS: CONNECT ONCE
---==================================================
+end
 
-flySwitch.Activated:Connect(function()
-    setFlyEnabled(not flyEnabled)
-end)
-
-flyLabel.Activated:Connect(function()
-    local now = os.clock()
-
-    if now - lastFlyRowTap <= 0.35 then
-        flyOverlay.Visible = true
-        lastFlyRowTap = 0
-    else
-        lastFlyRowTap = now
-    end
-end)
-
-player.CharacterAdded:Connect(function()
-    if flyEnabled then
-        task.wait(0.3)
-        if flyEnabled then
-            startFly()
-        end
-    end
-end)
-
---==================================================
--- MENU OPEN / CLOSE
---==================================================
 
 local menuOpen = false
 
@@ -2007,118 +1639,112 @@ menuButton.Activated:Connect(function()
 setMenuOpen(not menuOpen)
 end)
 
---==================================================
--- RESPONSIVE LAYOUT
---==================================================
 
 local function updateLayout()
 local camera = workspace.CurrentCamera
 if not camera then return end
 
-local viewportWidth = camera.ViewportSize.X  
-local isMobile = viewportWidth < 600  
+local viewportWidth = camera.ViewportSize.X
+local isMobile = viewportWidth < 600
 
-header.Position = UDim2.fromOffset(CONFIG.X, CONFIG.Y)  
-header.Size = UDim2.new(  
-    isMobile and CONFIG.MobileWidthScale or CONFIG.DesktopWidthScale,  
-    0, 0,  
-    isMobile and CONFIG.MobileHeight or CONFIG.DesktopHeight  
-)  
+header.Position = UDim2.fromOffset(CONFIG.X, CONFIG.Y)
+header.Size = UDim2.new(
+    isMobile and CONFIG.MobileWidthScale or CONFIG.DesktopWidthScale,
+    0, 0,
+    isMobile and CONFIG.MobileHeight or CONFIG.DesktopHeight
+)
 
-local height = header.Size.Y.Offset  
-local left = isMobile and 10 or 14  
-local titleSize = isMobile and 20 or 24  
-local textSize = isMobile and 11 or 14  
-local betaWidth = isMobile and 46 or 55  
-local betaHeight = isMobile and 23 or 27  
-local betaGap = isMobile and 6 or 8  
-local buttonWidth = isMobile and 28 or 34  
-local rightPadding = 7  
+local height = header.Size.Y.Offset
+local left = isMobile and 10 or 14
+local titleSize = isMobile and 20 or 24
+local textSize = isMobile and 11 or 14
+local betaWidth = isMobile and 46 or 55
+local betaHeight = isMobile and 23 or 27
+local betaGap = isMobile and 6 or 8
+local buttonWidth = isMobile and 28 or 34
+local rightPadding = 7
 
-title.TextSize = titleSize  
-title.Position = UDim2.fromOffset(left, 0)  
-title.Size = UDim2.fromOffset(190, height)  
+title.TextSize = titleSize
+title.Position = UDim2.fromOffset(left, 0)
+title.Size = UDim2.fromOffset(190, height)
 
-beta.TextSize = isMobile and 10 or 12  
-beta.Size = UDim2.fromOffset(betaWidth, betaHeight)  
-beta.Position = UDim2.new(  
-    0, left + title.TextBounds.X + betaGap, 0.5, 0  
-)  
+beta.TextSize = isMobile and 10 or 12
+beta.Size = UDim2.fromOffset(betaWidth, betaHeight)
+beta.Position = UDim2.new(
+    0, left + title.TextBounds.X + betaGap, 0.5, 0
+)
 
-fpsLabel.TextSize = textSize  
-pingLabel.TextSize = textSize  
-ownerLabel.TextSize = textSize  
+fpsLabel.TextSize = textSize
+pingLabel.TextSize = textSize
+ownerLabel.TextSize = textSize
 
-menuButton.Size = UDim2.fromOffset(buttonWidth, isMobile and 28 or 30)  
-menuButton.Position = UDim2.new(1, -rightPadding, 0.5, 0)  
+menuButton.Size = UDim2.fromOffset(buttonWidth, isMobile and 28 or 30)
+menuButton.Position = UDim2.new(1, -rightPadding, 0.5, 0)
 
-local rightLimit = header.AbsoluteSize.X - buttonWidth - 20  
-local x = beta.Position.X.Offset + betaWidth + (isMobile and 8 or 12)  
+local rightLimit = header.AbsoluteSize.X - buttonWidth - 20
+local x = beta.Position.X.Offset + betaWidth + (isMobile and 8 or 12)
 
-fpsLabel.Position = UDim2.new(0, x, 0, 0)  
-fpsLabel.Size = UDim2.new(0, 75, 1, 0)  
-x += fpsLabel.TextBounds.X + (isMobile and 5 or 10)  
+fpsLabel.Position = UDim2.new(0, x, 0, 0)
+fpsLabel.Size = UDim2.new(0, 75, 1, 0)
+x += fpsLabel.TextBounds.X + (isMobile and 5 or 10)
 
-separator1.Position = UDim2.new(  
-    0, x, 0, (height - (isMobile and 20 or 25)) / 2  
-)  
-separator1.Size = UDim2.fromOffset(1, isMobile and 20 or 25)  
-x += isMobile and 8 or 12  
+separator1.Position = UDim2.new(
+    0, x, 0, (height - (isMobile and 20 or 25)) / 2
+)
+separator1.Size = UDim2.fromOffset(1, isMobile and 20 or 25)
+x += isMobile and 8 or 12
 
-pingLabel.Position = UDim2.new(0, x, 0, 0)  
-pingLabel.Size = UDim2.new(0, 100, 1, 0)  
-x += pingLabel.TextBounds.X + (isMobile and 5 or 10)  
+pingLabel.Position = UDim2.new(0, x, 0, 0)
+pingLabel.Size = UDim2.new(0, 100, 1, 0)
+x += pingLabel.TextBounds.X + (isMobile and 5 or 10)
 
-separator2.Position = UDim2.new(  
-    0, x, 0, (height - (isMobile and 20 or 25)) / 2  
-)  
-separator2.Size = UDim2.fromOffset(1, isMobile and 20 or 25)  
-x += isMobile and 8 or 12  
+separator2.Position = UDim2.new(
+    0, x, 0, (height - (isMobile and 20 or 25)) / 2
+)
+separator2.Size = UDim2.fromOffset(1, isMobile and 20 or 25)
+x += isMobile and 8 or 12
 
-local profileSize = isMobile and 26 or 30  
-local profileX = rightLimit - profileSize + 8  
-local ownerWidth = math.max(0, profileX - x - 8)  
+local profileSize = isMobile and 26 or 30
+local profileX = rightLimit - profileSize + 8
+local ownerWidth = math.max(0, profileX - x - 8)
 
-ownerLabel.Position = UDim2.new(0, x, 0, 0)  
-ownerLabel.Size = UDim2.new(0, ownerWidth, 1, 0)  
+ownerLabel.Position = UDim2.new(0, x, 0, 0)
+ownerLabel.Size = UDim2.new(0, ownerWidth, 1, 0)
 
-profileFrame.Size = UDim2.fromOffset(profileSize, profileSize)  
-profileFrame.Position = UDim2.new(0, profileX, 0.5, 0)  
+profileFrame.Size = UDim2.fromOffset(profileSize, profileSize)
+profileFrame.Position = UDim2.new(0, profileX, 0.5, 0)
 
-separator1.Visible = rightLimit > separator1.Position.X.Offset + 20  
-separator2.Visible = rightLimit > separator2.Position.X.Offset + 20  
+separator1.Visible = rightLimit > separator1.Position.X.Offset + 20
+separator2.Visible = rightLimit > separator2.Position.X.Offset + 20
 
-local panelHeight = CONFIG.PanelHeight  
-local panelGap = CONFIG.PanelGap  
-local margin = CONFIG.PanelSideMargin  
-local availableWidth = math.max(  
-    0,  
-    viewportWidth - margin * 2  
-        - (CONFIG.PanelCount - 1) * panelGap  
-)  
-local panelWidth = math.floor(availableWidth / CONFIG.PanelCount)  
+local panelHeight = CONFIG.PanelHeight
+local panelGap = CONFIG.PanelGap
+local margin = CONFIG.PanelSideMargin
+local availableWidth = math.max(
+    0,
+    viewportWidth - margin * 2
+        - (CONFIG.PanelCount - 1) * panelGap
+)
+local panelWidth = math.floor(availableWidth / CONFIG.PanelCount)
 
-panelLayout.Padding = UDim.new(0, panelGap)  
+panelLayout.Padding = UDim.new(0, panelGap)
 
-for _, panel in ipairs(panels) do  
-    panel.Size = UDim2.fromOffset(panelWidth, panelHeight)  
-end  
+for _, panel in ipairs(panels) do
+    panel.Size = UDim2.fromOffset(panelWidth, panelHeight)
+end
 
-panelContainer.Size = UDim2.fromOffset(  
-    CONFIG.PanelCount * panelWidth  
-        + (CONFIG.PanelCount - 1) * panelGap,  
-    panelHeight  
-)  
-panelContainer.Position = UDim2.new(  
-    CONFIG.PanelCenterX, 0,  
-    CONFIG.PanelCenterY, CONFIG.PanelOffsetY - panelHeight / 2  
+panelContainer.Size = UDim2.fromOffset(
+    CONFIG.PanelCount * panelWidth
+        + (CONFIG.PanelCount - 1) * panelGap,
+    panelHeight
+)
+panelContainer.Position = UDim2.new(
+    CONFIG.PanelCenterX, 0,
+    CONFIG.PanelCenterY, CONFIG.PanelOffsetY - panelHeight / 2
 )
 
 end
 
---==================================================
--- FPS COUNTER
---==================================================
 
 local frameCount = 0
 local elapsed = 0
@@ -2127,27 +1753,24 @@ RunService.RenderStepped:Connect(function(dt)
 frameCount += 1
 elapsed += dt
 
-if elapsed >= 0.5 then  
-    local fps = math.floor(frameCount / elapsed + 0.5)  
-    fpsLabel.Text = "FPS: " .. fps  
+if elapsed >= 0.5 then
+    local fps = math.floor(frameCount / elapsed + 0.5)
+    fpsLabel.Text = "FPS: " .. fps
 
-    if fps >= 55 then  
-        fpsLabel.TextColor3 = COLORS.Green  
-    elseif fps >= 30 then  
-        fpsLabel.TextColor3 = COLORS.Yellow  
-    else  
-        fpsLabel.TextColor3 = COLORS.Red  
-    end  
+    if fps >= 55 then
+        fpsLabel.TextColor3 = COLORS.Green
+    elseif fps >= 30 then
+        fpsLabel.TextColor3 = COLORS.Yellow
+    else
+        fpsLabel.TextColor3 = COLORS.Red
+    end
 
-    frameCount = 0  
-    elapsed = 0  
+    frameCount = 0
+    elapsed = 0
 end
 
 end)
 
---==================================================
--- PING COUNTER
---==================================================
 
 task.spawn(function()
 while gui.Parent do
@@ -2155,37 +1778,34 @@ local success, ping = pcall(function()
 return Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
 end)
 
-if success and typeof(ping) == "number" then  
-        ping = math.floor(ping + 0.5)  
-        pingLabel.Text = "Ping: " .. ping .. " ms"  
+if success and typeof(ping) == "number" then
+        ping = math.floor(ping + 0.5)
+        pingLabel.Text = "Ping: " .. ping .. " ms"
 
-        if ping <= 50 then  
-            pingLabel.TextColor3 = COLORS.Green  
-        elseif ping <= 100 then  
-            pingLabel.TextColor3 = COLORS.Green:Lerp(  
-                COLORS.Yellow, (ping - 50) / 50  
-            )  
-        elseif ping <= 180 then  
-            pingLabel.TextColor3 = COLORS.Yellow:Lerp(  
-                COLORS.Red, (ping - 100) / 80  
-            )  
-        else  
-            pingLabel.TextColor3 = COLORS.Red  
-        end  
-    else  
-        pingLabel.Text = "Ping: -- ms"  
-        pingLabel.TextColor3 = COLORS.Yellow  
-    end  
+        if ping <= 50 then
+            pingLabel.TextColor3 = COLORS.Green
+        elseif ping <= 100 then
+            pingLabel.TextColor3 = COLORS.Green:Lerp(
+                COLORS.Yellow, (ping - 50) / 50
+            )
+        elseif ping <= 180 then
+            pingLabel.TextColor3 = COLORS.Yellow:Lerp(
+                COLORS.Red, (ping - 100) / 80
+            )
+        else
+            pingLabel.TextColor3 = COLORS.Red
+        end
+    else
+        pingLabel.Text = "Ping: -- ms"
+        pingLabel.TextColor3 = COLORS.Yellow
+    end
 
-    updateLayout()  
-    task.wait(1)  
+    updateLayout()
+    task.wait(1)
 end
 
 end)
 
---==================================================
--- CAMERA VIEWPORT WATCH
---==================================================
 
 local viewportConnection
 
@@ -2195,11 +1815,11 @@ viewportConnection:Disconnect()
 viewportConnection = nil
 end
 
-local camera = workspace.CurrentCamera  
-if camera then  
-    viewportConnection =  
-        camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateLayout)  
-end  
+local camera = workspace.CurrentCamera
+if camera then
+    viewportConnection =
+        camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateLayout)
+end
 
 updateLayout()
 
@@ -2209,3 +1829,40 @@ workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
 watchCamera()
 
 print("[ZenClient] BETA v14 Auto Target Lock loaded")
+
+--==================================================
+-- ZenClient BETA v14 - ESP Player (Integrated)
+-- Render panel toggle; double-tap label to adjust line thickness
+--==================================================
+local p=panels and panels[3]
+if not p then warn('[ZenClient ESP] Render panel not found; paste into original script.'); return end
+local enabled,thickness,lastTap=false,1,0
+local conn
+local line=Instance.new('Frame'); line.Name='ESPPlayerLine'; line.AnchorPoint=Vector2.new(0,.5); line.BackgroundColor3=COLORS.NeonPurple; line.BorderSizePixel=0; line.Size=UDim2.fromOffset(0,thickness); line.Visible=false; line.ZIndex=90; line.Parent=gui
+local lc=Instance.new('UICorner'); lc.CornerRadius=UDim.new(0,4); lc.Parent=line
+local row=Instance.new('Frame'); row.Name='ESPPlayerRow'; row.AnchorPoint=Vector2.new(.5,0); row.Position=UDim2.new(.5,0,0,49); row.Size=UDim2.new(1,-12,0,30); row.BackgroundColor3=Color3.fromRGB(25,13,53); row.BorderSizePixel=0; row.ZIndex=13; row.Parent=p; addCorner(row,6); local rs=addStroke(row,COLORS.Purple,1)
+local label=Instance.new('TextButton'); label.Name='ESPPlayerLabel'; label.Position=UDim2.fromOffset(7,0); label.Size=UDim2.new(1,-43,1,0); label.BackgroundTransparency=1; label.Text='ESP Player'; label.TextColor3=COLORS.LightPurple; label.Font=Enum.Font.GothamBold; label.TextSize=10; label.TextXAlignment=Enum.TextXAlignment.Left; label.AutoButtonColor=false; label.ZIndex=14; label.Parent=row
+local sw=Instance.new('TextButton'); sw.Name='ESPPlayerSwitch'; sw.AnchorPoint=Vector2.new(1,.5); sw.Position=UDim2.new(1,-5,.5,0); sw.Size=UDim2.fromOffset(25,14); sw.BackgroundColor3=Color3.fromRGB(55,35,75); sw.BorderSizePixel=0; sw.Text=''; sw.AutoButtonColor=false; sw.ZIndex=15; sw.Parent=row; addCorner(sw,7); local ss=addStroke(sw,COLORS.NeonPurple,1)
+local knob=Instance.new('Frame'); knob.AnchorPoint=Vector2.new(0,.5); knob.Position=UDim2.new(0,2,.5,0); knob.Size=UDim2.fromOffset(10,10); knob.BackgroundColor3=COLORS.LightPurple; knob.BorderSizePixel=0; knob.ZIndex=16; knob.Parent=sw; addCorner(knob,5)
+local overlay=Instance.new('Frame'); overlay.Name='ESPPlayerSettingsOverlay'; overlay.Size=UDim2.fromScale(1,1); overlay.BackgroundColor3=Color3.new(0,0,0); overlay.BackgroundTransparency=.35; overlay.BorderSizePixel=0; overlay.Visible=false; overlay.ZIndex=80; overlay.Parent=gui
+local card=Instance.new('Frame'); card.AnchorPoint=Vector2.new(.5,.5); card.Position=UDim2.fromScale(.5,.5); card.Size=UDim2.new(.82,0,0,190); card.BackgroundColor3=COLORS.Background; card.BorderSizePixel=0; card.ZIndex=81; card.Parent=overlay; addCorner(card,12); addStroke(card,COLORS.NeonPurple,1.5)
+local c=Instance.new('UISizeConstraint'); c.MaxSize=Vector2.new(360,190); c.MinSize=Vector2.new(240,190); c.Parent=card
+local title=Instance.new('TextLabel'); title.BackgroundTransparency=1; title.Position=UDim2.fromOffset(14,12); title.Size=UDim2.new(1,-28,0,26); title.Text='ESP Player Line'; title.TextColor3=COLORS.White; title.Font=Enum.Font.GothamBold; title.TextSize=17; title.ZIndex=82; title.Parent=card
+local val=Instance.new('TextLabel'); val.BackgroundTransparency=1; val.Position=UDim2.fromOffset(14,48); val.Size=UDim2.new(1,-28,0,24); val.Text='Thickness: 1 px'; val.TextColor3=COLORS.LightPurple; val.Font=Enum.Font.GothamSemibold; val.TextSize=14; val.TextXAlignment=Enum.TextXAlignment.Left; val.ZIndex=82; val.Parent=card
+local slider=Instance.new('TextButton'); slider.Position=UDim2.new(0,16,0,83); slider.Size=UDim2.new(1,-32,0,12); slider.BackgroundColor3=Color3.fromRGB(48,31,72); slider.BorderSizePixel=0; slider.Text=''; slider.AutoButtonColor=false; slider.ZIndex=82; slider.Parent=card; addCorner(slider,6)
+local fill=Instance.new('Frame'); fill.Size=UDim2.new(1/7,0,1,0); fill.BackgroundColor3=COLORS.NeonPurple; fill.BorderSizePixel=0; fill.ZIndex=83; fill.Parent=slider; addCorner(fill,6)
+local sk=Instance.new('Frame'); sk.AnchorPoint=Vector2.new(.5,.5); sk.Position=UDim2.new(1/7,0,.5,0); sk.Size=UDim2.fromOffset(18,18); sk.BackgroundColor3=COLORS.White; sk.BorderSizePixel=0; sk.ZIndex=84; sk.Parent=slider; addCorner(sk,9)
+local function setThickness(x) local w=slider.AbsoluteSize.X; if w<=0 then return end; local a=math.clamp((x-slider.AbsolutePosition.X)/w,0,1); thickness=0.5+math.floor(a*7+0.5)*0.5; local n=(thickness-0.5)/3.5; val.Text='Thickness: '..string.format('%.1f',thickness)..' px'; fill.Size=UDim2.new(n,0,1,0); sk.Position=UDim2.new(n,0,.5,0); line.Size=UDim2.fromOffset(line.Size.X.Offset,thickness) end
+local dragging=false
+slider.Activated:Connect(function() setThickness(UserInputService:GetMouseLocation().X) end)
+slider.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true; setThickness(i.Position.X) end end)
+UserInputService.InputChanged:Connect(function(i) if dragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then setThickness(i.Position.X) end end)
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
+local ok=Instance.new('TextButton'); ok.AnchorPoint=Vector2.new(.5,1); ok.Position=UDim2.new(.5,0,1,-12); ok.Size=UDim2.new(1,-32,0,34); ok.BackgroundColor3=COLORS.Purple; ok.BorderSizePixel=0; ok.Text='OK'; ok.TextColor3=COLORS.White; ok.Font=Enum.Font.GothamBold; ok.TextSize=14; ok.ZIndex=82; ok.Parent=card; addCorner(ok,8); addStroke(ok,COLORS.NeonPurple,1); ok.Activated:Connect(function() overlay.Visible=false end)
+local function targetPos() local cam=workspace.CurrentCamera; if not cam then return nil end; local sz=cam.ViewportSize; local center=Vector2.new(sz.X/2,sz.Y/2); local best,bd=nil,math.huge; for _,op in ipairs(Players:GetPlayers()) do if op~=player then local ch=op.Character; local h=ch and ch:FindFirstChildOfClass('Humanoid'); local r=ch and ch:FindFirstChild('HumanoidRootPart'); if h and h.Health>0 and r and r:IsA('BasePart') then local pt,on=cam:WorldToViewportPoint(r.Position); if on and pt.Z>0 then local pos=Vector2.new(pt.X,pt.Y); local d=(pos-center).Magnitude; if d<bd then best,bd=pos,d end end end end end; return best end
+local function updateLine() local cam=workspace.CurrentCamera; if not enabled or not cam then line.Visible=false; return end; local sz=cam.ViewportSize; local center=Vector2.new(sz.X/2,sz.Y/2); local target=targetPos(); if not target then line.Visible=false; return end; local delta=target-center; local len=delta.Magnitude; if len<1 then line.Visible=false; return end; line.Position=UDim2.fromOffset(center.X,center.Y); line.Size=UDim2.fromOffset(len,thickness); line.Rotation=math.deg(math.atan2(delta.Y,delta.X)); line.Visible=true end
+local function setEnabled(on) enabled=on; if conn then conn:Disconnect(); conn=nil end; if on then conn=RunService.RenderStepped:Connect(updateLine) else line.Visible=false end; TweenService:Create(sw,TweenInfo.new(.16),{BackgroundColor3=on and Color3.fromRGB(100,35,175) or Color3.fromRGB(55,35,75)}):Play(); TweenService:Create(knob,TweenInfo.new(.16),{Position=on and UDim2.new(1,-12,.5,0) or UDim2.new(0,2,.5,0),BackgroundColor3=on and COLORS.White or COLORS.LightPurple}):Play(); ss.Color=on and COLORS.LightPurple or COLORS.NeonPurple; rs.Color=on and COLORS.NeonPurple or COLORS.Purple; label.TextColor3=on and COLORS.White or COLORS.LightPurple end
+sw.Activated:Connect(function() setEnabled(not enabled) end)
+label.Activated:Connect(function() local now=os.clock(); if now-lastTap<=.35 then overlay.Visible=true; lastTap=0 else lastTap=now end end)
+gui.Destroying:Connect(function() if conn then conn:Disconnect() end end)
+print('[ZenClient ESP] ESP Player add-on loaded')
