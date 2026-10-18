@@ -1568,101 +1568,428 @@ elseif i == 2 then
     flyOkButton.Name = "ConfirmFlySpeedButton"
     flyOkButton.AnchorPoint = Vector2.new(0.5, 1)
     flyOkButton.Position = UDim2.new(0.5, 0, 1, -12)
-    flyOkButton.Size = UDim2.new(1, -32, 0, 34)
-    flyOkButton.BackgroundColor3 = COLORS.Purple
-    flyOkButton.BorderSizePixel = 0
-    flyOkButton.Text = "OK"
-    flyOkButton.TextColor3 = COLORS.White
-    flyOkButton.Font = Enum.Font.GothamBold
-    flyOkButton.TextSize = 14
-    flyOkButton.ZIndex = 82
-    flyOkButton.Parent = flyCard
-    addCorner(flyOkButton, 8)
-    addStroke(flyOkButton, COLORS.NeonPurple, 1)
-    flyOkButton.Activated:Connect(function() flyOverlay.Visible = false end)
+--==================================================
+-- ZenClient BETA - FLY SYSTEM (BUTTON FIX)
+-- ใช้ใน Roblox Studio ของตัวเอง
+-- ต้องมี panel, gui, COLORS, addCorner, addStroke
+-- player, RunService, TweenService, UserInputService
+--==================================================
 
-    flyLabel.Activated:Connect(function()
-        local now = os.clock()
-        if now - lastFlyRowTap <= 0.35 then
-            flyOverlay.Visible = true
-            lastFlyRowTap = 0
-        else
-            lastFlyRowTap = now
+local flyEnabled = false
+local flySpeed = 40
+local minFlySpeed = 16
+local maxFlySpeed = 100
+
+local flyConnection
+local flyAttachment
+local flyVelocity
+local lastFlyRowTap = 0
+
+-- ลบ Fly UI เก่าหากมี
+local oldFlyRow = panel:FindFirstChild("FlyRow")
+if oldFlyRow then oldFlyRow:Destroy() end
+
+local oldFlyOverlay = gui:FindFirstChild("FlySettingsOverlay")
+if oldFlyOverlay then oldFlyOverlay:Destroy() end
+
+--==================================================
+-- FLY ROW
+--==================================================
+
+local flyRow = Instance.new("Frame")
+flyRow.Name = "FlyRow"
+flyRow.Position = UDim2.new(0.5, 0, 0, 83)
+flyRow.Size = UDim2.new(1, -20, 0, 30)
+flyRow.AnchorPoint = Vector2.new(0.5, 0)
+flyRow.BackgroundColor3 = Color3.fromRGB(25, 18, 38)
+flyRow.BorderSizePixel = 0
+flyRow.Active = true
+flyRow.ZIndex = 10
+flyRow.Parent = panel
+
+addCorner(flyRow, 8)
+local flyRowStroke = addStroke(flyRow, COLORS.Purple, 1)
+
+local flyLabel = Instance.new("TextButton")
+flyLabel.Name = "FlyLabel"
+flyLabel.Position = UDim2.new(0, 10, 0, 0)
+flyLabel.Size = UDim2.new(1, -65, 1, 0)
+flyLabel.BackgroundTransparency = 1
+flyLabel.BorderSizePixel = 0
+flyLabel.Text = "Fly"
+flyLabel.TextColor3 = COLORS.LightPurple
+flyLabel.Font = Enum.Font.GothamBold
+flyLabel.TextSize = 13
+flyLabel.TextXAlignment = Enum.TextXAlignment.Left
+flyLabel.AutoButtonColor = false
+flyLabel.Active = true
+flyLabel.Selectable = true
+flyLabel.ZIndex = 12
+flyLabel.Parent = flyRow
+
+--==================================================
+-- SWITCH
+--==================================================
+
+local flySwitch = Instance.new("TextButton")
+flySwitch.Name = "FlySwitch"
+flySwitch.AnchorPoint = Vector2.new(1, 0.5)
+flySwitch.Position = UDim2.new(1, -7, 0.5, 0)
+flySwitch.Size = UDim2.new(0, 38, 0, 20)
+flySwitch.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
+flySwitch.BorderSizePixel = 0
+flySwitch.Text = ""
+flySwitch.AutoButtonColor = false
+flySwitch.Active = true
+flySwitch.Selectable = true
+flySwitch.ZIndex = 13
+flySwitch.Parent = flyRow
+
+addCorner(flySwitch, 10)
+local flySwitchStroke = addStroke(flySwitch, COLORS.NeonPurple, 1)
+
+local flySwitchKnob = Instance.new("Frame")
+flySwitchKnob.Name = "Knob"
+flySwitchKnob.Position = UDim2.new(0, 2, 0.5, 0)
+flySwitchKnob.AnchorPoint = Vector2.new(0, 0.5)
+flySwitchKnob.Size = UDim2.new(0, 16, 0, 16)
+flySwitchKnob.BackgroundColor3 = COLORS.LightPurple
+flySwitchKnob.BorderSizePixel = 0
+flySwitchKnob.ZIndex = 14
+flySwitchKnob.Parent = flySwitch
+
+addCorner(flySwitchKnob, 8)
+
+--==================================================
+-- SETTINGS OVERLAY
+--==================================================
+
+local flyOverlay = Instance.new("Frame")
+flyOverlay.Name = "FlySettingsOverlay"
+flyOverlay.Size = UDim2.fromScale(1, 1)
+flyOverlay.Position = UDim2.fromScale(0, 0)
+flyOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+flyOverlay.BackgroundTransparency = 0.35
+flyOverlay.BorderSizePixel = 0
+flyOverlay.Visible = false
+flyOverlay.Active = true
+flyOverlay.ZIndex = 80
+flyOverlay.Parent = gui
+
+local flyCard = Instance.new("Frame")
+flyCard.Name = "FlySettingsCard"
+flyCard.AnchorPoint = Vector2.new(0.5, 0.5)
+flyCard.Position = UDim2.fromScale(0.5, 0.5)
+flyCard.Size = UDim2.new(0, 270, 0, 150)
+flyCard.BackgroundColor3 = Color3.fromRGB(23, 17, 35)
+flyCard.BorderSizePixel = 0
+flyCard.Active = true
+flyCard.ZIndex = 81
+flyCard.Parent = flyOverlay
+
+addCorner(flyCard, 12)
+addStroke(flyCard, COLORS.NeonPurple, 1.5)
+
+local flyTitle = Instance.new("TextLabel")
+flyTitle.Size = UDim2.new(1, -20, 0, 28)
+flyTitle.Position = UDim2.new(0, 10, 0, 8)
+flyTitle.BackgroundTransparency = 1
+flyTitle.Text = "FLY SETTINGS"
+flyTitle.TextColor3 = COLORS.White
+flyTitle.Font = Enum.Font.GothamBold
+flyTitle.TextSize = 15
+flyTitle.ZIndex = 82
+flyTitle.Parent = flyCard
+
+local flyValueLabel = Instance.new("TextLabel")
+flyValueLabel.Position = UDim2.new(0, 15, 0, 42)
+flyValueLabel.Size = UDim2.new(1, -30, 0, 20)
+flyValueLabel.BackgroundTransparency = 1
+flyValueLabel.TextColor3 = COLORS.LightPurple
+flyValueLabel.Font = Enum.Font.Gotham
+flyValueLabel.TextSize = 12
+flyValueLabel.TextXAlignment = Enum.TextXAlignment.Left
+flyValueLabel.ZIndex = 82
+flyValueLabel.Parent = flyCard
+
+local flySlider = Instance.new("TextButton")
+flySlider.Name = "FlySpeedSlider"
+flySlider.Position = UDim2.new(0, 15, 0, 70)
+flySlider.Size = UDim2.new(1, -30, 0, 12)
+flySlider.BackgroundColor3 = Color3.fromRGB(55, 40, 70)
+flySlider.BorderSizePixel = 0
+flySlider.Text = ""
+flySlider.AutoButtonColor = false
+flySlider.Active = true
+flySlider.ZIndex = 82
+flySlider.Parent = flyCard
+
+addCorner(flySlider, 6)
+
+local flySliderFill = Instance.new("Frame")
+flySliderFill.Size = UDim2.new(0, 0, 1, 0)
+flySliderFill.BackgroundColor3 = COLORS.Purple
+flySliderFill.BorderSizePixel = 0
+flySliderFill.ZIndex = 83
+flySliderFill.Parent = flySlider
+
+addCorner(flySliderFill, 6)
+
+local flySliderKnob = Instance.new("Frame")
+flySliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+flySliderKnob.Position = UDim2.new(0, 0, 0.5, 0)
+flySliderKnob.Size = UDim2.new(0, 16, 0, 16)
+flySliderKnob.BackgroundColor3 = COLORS.White
+flySliderKnob.BorderSizePixel = 0
+flySliderKnob.ZIndex = 84
+flySliderKnob.Parent = flySlider
+
+addCorner(flySliderKnob, 8)
+
+local function setFlySpeedFromX(x)
+    local width = flySlider.AbsoluteSize.X
+    if width <= 0 then return end
+
+    local alpha = math.clamp(
+        (x - flySlider.AbsolutePosition.X) / width,
+        0,
+        1
+    )
+
+    flySpeed = math.floor(
+        minFlySpeed + (maxFlySpeed - minFlySpeed) * alpha
+    )
+
+    flyValueLabel.Text = "Speed: " .. flySpeed
+    flySliderFill.Size = UDim2.new(alpha, 0, 1, 0)
+    flySliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
+end
+
+setFlySpeedFromX(
+    flySlider.AbsolutePosition.X
+    + flySlider.AbsoluteSize.X
+    * ((flySpeed - minFlySpeed) / (maxFlySpeed - minFlySpeed))
+)
+
+local flyDraggingSlider = false
+
+flySlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        flyDraggingSlider = true
+        setFlySpeedFromX(input.Position.X)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if flyDraggingSlider
+        and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+        setFlySpeedFromX(input.Position.X)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        flyDraggingSlider = false
+    end
+end)
+
+local flyOkButton = Instance.new("TextButton")
+flyOkButton.Name = "ConfirmFlySpeedButton"
+flyOkButton.AnchorPoint = Vector2.new(0.5, 1)
+flyOkButton.Position = UDim2.new(0.5, 0, 1, -12)
+flyOkButton.Size = UDim2.new(1, -32, 0, 34)
+flyOkButton.BackgroundColor3 = COLORS.Purple
+flyOkButton.BorderSizePixel = 0
+flyOkButton.Text = "OK"
+flyOkButton.TextColor3 = COLORS.White
+flyOkButton.Font = Enum.Font.GothamBold
+flyOkButton.TextSize = 14
+flyOkButton.ZIndex = 85
+flyOkButton.Parent = flyCard
+
+addCorner(flyOkButton, 8)
+addStroke(flyOkButton, COLORS.NeonPurple, 1)
+
+flyOkButton.Activated:Connect(function()
+    flyOverlay.Visible = false
+end)
+
+--==================================================
+-- STOP FLY
+--==================================================
+
+local function stopFly()
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
+
+    if flyVelocity then
+        flyVelocity:Destroy()
+        flyVelocity = nil
+    end
+
+    if flyAttachment then
+        flyAttachment:Destroy()
+        flyAttachment = nil
+    end
+
+    local character = player.Character
+    local humanoid = character
+        and character:FindFirstChildOfClass("Humanoid")
+
+    if humanoid then
+        humanoid.PlatformStand = false
+    end
+end
+
+--==================================================
+-- START FLY
+--==================================================
+
+local function startFly()
+    if not RunService:IsStudio() then
+        flyEnabled = false
+        warn("[ZenClient] Fly is limited to Studio test places.")
+        return
+    end
+
+    local character = player.Character
+    local root = character
+        and character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character
+        and character:FindFirstChildOfClass("Humanoid")
+
+    if not root or not humanoid then
+        flyEnabled = false
+        return
+    end
+
+    stopFly()
+
+    flyAttachment = Instance.new("Attachment")
+    flyAttachment.Name = "ZenClientFlyAttachment"
+    flyAttachment.Parent = root
+
+    flyVelocity = Instance.new("LinearVelocity")
+    flyVelocity.Name = "ZenClientFlyVelocity"
+    flyVelocity.Attachment0 = flyAttachment
+    flyVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
+    flyVelocity.VelocityConstraintMode =
+        Enum.VelocityConstraintMode.Vector
+    flyVelocity.MaxForce = math.huge
+    flyVelocity.VectorVelocity = Vector3.zero
+    flyVelocity.Parent = root
+
+    humanoid.PlatformStand = true
+
+    flyConnection = RunService.RenderStepped:Connect(function()
+        if not flyEnabled or not root.Parent then
+            stopFly()
+            return
         end
+
+        local move = humanoid.MoveDirection * flySpeed
+        local vertical = 0
+
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            vertical += flySpeed
+        end
+
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            vertical -= flySpeed
+        end
+
+        flyVelocity.VectorVelocity =
+            Vector3.new(move.X, vertical, move.Z)
     end)
+end
 
-    local function stopFly()
-        if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
-        if flyVelocity then flyVelocity:Destroy(); flyVelocity = nil end
-        if flyAttachment then flyAttachment:Destroy(); flyAttachment = nil end
-        local character = player.Character
-        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        if humanoid then humanoid.PlatformStand = false end
-    end
+--==================================================
+-- ENABLE / DISABLE
+--==================================================
 
-    local function startFly()
-        -- Keep this movement feature limited to Roblox Studio test places.
-        if not RunService:IsStudio() then
-            flyEnabled = false
-            flyLabel.Text = "Fly (Studio only)"
-            return
-        end
-        local character = player.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        if not root or not humanoid then
-            flyEnabled = false
-            return
-        end
-        stopFly()
-        flyAttachment = Instance.new("Attachment")
-        flyAttachment.Name = "ZenClientFlyAttachment"
-        flyAttachment.Parent = root
-        flyVelocity = Instance.new("LinearVelocity")
-        flyVelocity.Name = "ZenClientFlyVelocity"
-        flyVelocity.Attachment0 = flyAttachment
-        flyVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
-        flyVelocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
-        flyVelocity.MaxForce = math.huge
-        flyVelocity.VectorVelocity = Vector3.zero
-        flyVelocity.Parent = root
-        humanoid.PlatformStand = true
-        flyConnection = RunService.RenderStepped:Connect(function()
-            if not flyEnabled or not root.Parent then stopFly(); return end
-            local camera = workspace.CurrentCamera
-            if not camera then return end
-            local move = humanoid.MoveDirection * flySpeed
-            local vertical = 0
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) or UserInputService:IsKeyDown(Enum.KeyCode.ButtonA) then vertical += flySpeed end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.ButtonB) then vertical -= flySpeed end
-            flyVelocity.VectorVelocity = Vector3.new(move.X, vertical, move.Z)
-        end)
-    end
-
-    local function setFlyEnabled(enabled)
+local function setFlyEnabled(enabled)
+    if enabled and not RunService:IsStudio() then
+        flyEnabled = false
+        warn("[ZenClient] Fly is Studio-only.")
+    else
         flyEnabled = enabled
-        if enabled then startFly() else stopFly() end
-        local active = flyEnabled
-        TweenService:Create(flySwitch, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundColor3 = active and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
-        }):Play()
-        TweenService:Create(flySwitchKnob, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = active and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
-            BackgroundColor3 = active and COLORS.White or COLORS.LightPurple
-        }):Play()
-        flySwitchStroke.Color = active and COLORS.LightPurple or COLORS.NeonPurple
-        flyRowStroke.Color = active and COLORS.NeonPurple or COLORS.Purple
-        flyLabel.TextColor3 = active and COLORS.White or COLORS.LightPurple
-        if not active then flyLabel.Text = "Fly" end
     end
-    flySwitch.Activated:Connect(function() setFlyEnabled(not flyEnabled) end)
-    player.CharacterAdded:Connect(function()
-        if flyEnabled then task.wait(0.2); startFly() end
-    end)
 
+    if flyEnabled then
+        startFly()
+    else
+        stopFly()
+    end
+
+    local active = flyEnabled
+
+    TweenService:Create(
+        flySwitch,
+        TweenInfo.new(0.16),
+        {
+            BackgroundColor3 = active
+                and Color3.fromRGB(100, 35, 175)
+                or Color3.fromRGB(55, 35, 75)
+        }
+    ):Play()
+
+    TweenService:Create(
+        flySwitchKnob,
+        TweenInfo.new(0.16),
+        {
+            Position = active
+                and UDim2.new(1, -18, 0.5, 0)
+                or UDim2.new(0, 2, 0.5, 0),
+            BackgroundColor3 = active
+                and COLORS.White
+                or COLORS.LightPurple
+        }
+    ):Play()
+
+    flySwitchStroke.Color = active
+        and COLORS.LightPurple or COLORS.NeonPurple
+
+    flyRowStroke.Color = active
+        and COLORS.NeonPurple or COLORS.Purple
+
+    flyLabel.TextColor3 = active
+        and COLORS.White or COLORS.LightPurple
+
+    flyLabel.Text = active and "Fly: ON" or "Fly"
 end
 
-end
+--==================================================
+-- BUTTON EVENTS: CONNECT ONCE
+--==================================================
+
+flySwitch.Activated:Connect(function()
+    setFlyEnabled(not flyEnabled)
+end)
+
+flyLabel.Activated:Connect(function()
+    local now = os.clock()
+
+    if now - lastFlyRowTap <= 0.35 then
+        flyOverlay.Visible = true
+        lastFlyRowTap = 0
+    else
+        lastFlyRowTap = now
+    end
+end)
+
+player.CharacterAdded:Connect(function()
+    if flyEnabled then
+        task.wait(0.3)
+        if flyEnabled then
+            startFly()
+        end
+    end
+end)
 
 --==================================================
 -- MENU OPEN / CLOSE
