@@ -1349,6 +1349,8 @@ elseif i == 2 then
     local flySpeed = 40
     local lastFlyRowTap = 0
     local flyVelocity, flyAttachment, flyConnection
+    local flyAlignOrientation
+    local flyOldAutoRotate
 
     local flyRow = Instance.new("Frame")
     flyRow.Name = "FlyRow"
@@ -1550,9 +1552,17 @@ elseif i == 2 then
         if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
         if flyVelocity then flyVelocity:Destroy(); flyVelocity = nil end
         if flyAttachment then flyAttachment:Destroy(); flyAttachment = nil end
+        if flyAlignOrientation then flyAlignOrientation:Destroy(); flyAlignOrientation = nil end
         local character = player.Character
         local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        if humanoid then humanoid.PlatformStand = false end
+        if humanoid then
+            humanoid.PlatformStand = false
+            if flyOldAutoRotate ~= nil then
+                humanoid.AutoRotate = flyOldAutoRotate
+                flyOldAutoRotate = nil
+            end
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
     end
 
     local function startFly()
@@ -1575,16 +1585,61 @@ elseif i == 2 then
         flyVelocity.MaxForce = math.huge
         flyVelocity.VectorVelocity = Vector3.zero
         flyVelocity.Parent = root
-        humanoid.PlatformStand = true
+
+        -- Keep the avatar upright without PlatformStand, which can leave the
+        -- character lying sideways. The camera controls facing and flight direction.
+        flyOldAutoRotate = humanoid.AutoRotate
+        humanoid.AutoRotate = false
+        humanoid.PlatformStand = false
+
+        flyAlignOrientation = Instance.new("AlignOrientation")
+        flyAlignOrientation.Name = "ZenClientFlyUpright"
+        flyAlignOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
+        flyAlignOrientation.Attachment0 = flyAttachment
+        flyAlignOrientation.RigidityEnabled = false
+        flyAlignOrientation.Responsiveness = 35
+        flyAlignOrientation.MaxTorque = math.huge
+        flyAlignOrientation.Parent = root
+
         flyConnection = RunService.RenderStepped:Connect(function()
-            if not flyEnabled or not root.Parent then stopFly(); return end
+            if not flyEnabled or not root.Parent or not humanoid.Parent then
+                stopFly()
+                return
+            end
+
             local camera = workspace.CurrentCamera
             if not camera then return end
-            local move = humanoid.MoveDirection * flySpeed
+
+            -- Convert the normal movement input into camera-local directions,
+            -- then use the camera's full look vector so aiming up/down affects flight.
+            local moveDirection = humanoid.MoveDirection
+            local localMove = camera.CFrame:VectorToObjectSpace(moveDirection)
+            local cameraMove = (camera.CFrame.RightVector * localMove.X)
+                + (camera.CFrame.LookVector * -localMove.Z)
+
             local vertical = 0
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) or UserInputService:IsKeyDown(Enum.KeyCode.ButtonA) then vertical += flySpeed end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.ButtonB) then vertical -= flySpeed end
-            flyVelocity.VectorVelocity = Vector3.new(move.X, vertical, move.Z)
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space)
+                or UserInputService:IsKeyDown(Enum.KeyCode.ButtonA) then
+                vertical += flySpeed
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
+                or UserInputService:IsKeyDown(Enum.KeyCode.ButtonB) then
+                vertical -= flySpeed
+            end
+
+            local flightDirection = cameraMove * flySpeed + Vector3.new(0, vertical, 0)
+            flyVelocity.VectorVelocity = flightDirection
+
+            -- Face the horizontal camera direction while keeping the body upright.
+            local look = camera.CFrame.LookVector
+            local flatLook = Vector3.new(look.X, 0, look.Z)
+            if flatLook.Magnitude > 0.001 then
+                flyAlignOrientation.CFrame = CFrame.lookAt(
+                    Vector3.zero,
+                    flatLook.Unit,
+                    Vector3.yAxis
+                )
+            end
         end)
     end
 
