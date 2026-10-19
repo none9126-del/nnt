@@ -975,62 +975,67 @@ if i == 1 then
     local function clearHitboxVisual(character)
         local visuals = hitboxAdornments[character]
         if visuals then
-            if visuals.frame then visuals.frame:Destroy() end
+            if visuals.proxy then visuals.proxy:Destroy() end
             hitboxAdornments[character] = nil
         end
     end
 
-    -- Hitbox toggle now displays the original 2D screen-space box.
+    -- Hitbox toggle: client-side 3D VISUAL ONLY; does not change real collision.
+    -- Styled with the ZenClient purple Neon theme.
     local function updateHitboxVisual(otherPlayer)
         local character = otherPlayer and otherPlayer.Character
         if not character then return end
-        if not hitboxEnabled or otherPlayer == player then clearHitboxVisual(character); return end
+        if not hitboxEnabled or otherPlayer == player then
+            clearHitboxVisual(character)
+            return
+        end
+
         local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if not humanoid or humanoid.Health <= 0 then clearHitboxVisual(character); return end
-        local camera = workspace.CurrentCamera
-        if not camera then return end
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if not humanoid or humanoid.Health <= 0 or not root or not root:IsA("BasePart") then
+            clearHitboxVisual(character)
+            return
+        end
+
         local visuals = hitboxAdornments[character]
-        if not visuals or not visuals.frame or not visuals.frame.Parent then
-            local frame = Instance.new("Frame")
-            frame.Name = "Hitbox2D_" .. tostring(otherPlayer.UserId)
-            frame.AnchorPoint = Vector2.new(0.5, 0.5)
-            frame.BackgroundColor3 = Color3.fromRGB(160, 70, 255)
-            frame.BackgroundTransparency = 0.78
-            frame.BorderSizePixel = 0
-            frame.Visible = false
-            frame.ZIndex = 87
-            frame.Parent = gui
-            local stroke = Instance.new("UIStroke")
-            stroke.Color = Color3.fromRGB(0, 0, 0)
-            stroke.Thickness = 2
-            stroke.Parent = frame
-            visuals = {frame = frame}
+        if not visuals or not visuals.proxy or not visuals.proxy.Parent then
+            local proxy = Instance.new("Part")
+            proxy.Name = "Hitbox3DVisual_" .. tostring(otherPlayer.UserId)
+            proxy.Anchored = true
+            proxy.Transparency = 1
+            proxy.CanCollide = false
+            proxy.CanTouch = false
+            proxy.CanQuery = false
+            proxy.CastShadow = false
+            proxy.Size = Vector3.new(4, 4, 4)
+            proxy.Parent = workspace
+
+            local fill = Instance.new("BoxHandleAdornment")
+            fill.Name = "PurpleNeon3DFill"
+            fill.Adornee = proxy
+            fill.AlwaysOnTop = true
+            fill.ZIndex = 10
+            fill.Color3 = Color3.fromRGB(105, 35, 220)
+            fill.Transparency = 0.58
+            fill.Size = proxy.Size
+            fill.Parent = proxy
+
+            local outline = Instance.new("SelectionBox")
+            outline.Name = "Purple3DOutline"
+            outline.Adornee = proxy
+            outline.Color3 = Color3.fromRGB(190, 125, 255)
+            outline.LineThickness = 0.045
+            outline.SurfaceTransparency = 1
+            outline.Parent = proxy
+            visuals = {proxy = proxy, fill = fill, outline = outline}
             hitboxAdornments[character] = visuals
         end
-        local ok, cf, size = pcall(function() return character:GetBoundingBox() end)
-        if not ok or not cf or not size then visuals.frame.Visible = false; return end
-        size = size * (hitboxSizePercent / 100)
-        local half = size / 2
-        local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
-        local visible = false
-        for _, x in ipairs({-half.X, half.X}) do
-            for _, y in ipairs({-half.Y, half.Y}) do
-                for _, z in ipairs({-half.Z, half.Z}) do
-                    local pt = camera:WorldToViewportPoint(cf:PointToWorldSpace(Vector3.new(x,y,z)))
-                    if pt.Z > 0 then
-                        visible = true
-                        minX, minY = math.min(minX,pt.X), math.min(minY,pt.Y)
-                        maxX, maxY = math.max(maxX,pt.X), math.max(maxY,pt.Y)
-                    end
-                end
-            end
-        end
-        local viewport = camera.ViewportSize
-        minX, minY = math.clamp(minX,0,viewport.X), math.clamp(minY,0,viewport.Y)
-        maxX, maxY = math.clamp(maxX,0,viewport.X), math.clamp(maxY,0,viewport.Y)
-        visuals.frame.Position = UDim2.fromOffset((minX+maxX)/2,(minY+maxY)/2)
-        visuals.frame.Size = UDim2.fromOffset(math.max(2,maxX-minX),math.max(2,maxY-minY))
-        visuals.frame.Visible = visible and maxX > minX and maxY > minY
+
+        local size = root.Size * (hitboxSizePercent / 100)
+        visuals.proxy.CFrame = root.CFrame
+        visuals.proxy.Size = size
+        visuals.fill.Size = size
+        visuals.outline.Visible = true
     end
 
     local function refreshHitboxVisuals()
@@ -2166,9 +2171,9 @@ do
                 fill.Size = proxy.Size
                 fill.Parent = proxy
                 local outline = Instance.new("SelectionBox")
-                outline.Name = "Black3DOutline"
+                outline.Name = "Purple3DOutline"
                 outline.Adornee = proxy
-                outline.Color3 = Color3.fromRGB(0, 0, 0)
+                outline.Color3 = Color3.fromRGB(210, 150, 255)
                 outline.LineThickness = 0.045
                 outline.SurfaceTransparency = 1
                 outline.Parent = proxy
