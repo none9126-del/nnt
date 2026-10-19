@@ -974,8 +974,10 @@ if i == 1 then
     local function clearHitboxVisual(character)
         local visuals = hitboxAdornments[character]
         if visuals then
+            if visuals.connection then visuals.connection:Disconnect() end
             if visuals.fill then visuals.fill:Destroy() end
             if visuals.outline then visuals.outline:Destroy() end
+            if visuals.proxy then visuals.proxy:Destroy() end
             hitboxAdornments[character] = nil
         end
     end
@@ -998,40 +1000,74 @@ if i == 1 then
         end
 
         local visuals = hitboxAdornments[character]
-        if not visuals or not visuals.fill or not visuals.fill.Parent
+        if not visuals or not visuals.proxy or not visuals.proxy.Parent
+            or not visuals.fill or not visuals.fill.Parent
             or not visuals.outline or not visuals.outline.Parent then
             clearHitboxVisual(character)
 
-            -- Translucent purple volume with a distinct black outline.
+            -- Invisible 3D proxy defines matching bounds for the purple volume
+            -- and the black SelectionBox outline.
+            local proxy = Instance.new("Part")
+            proxy.Name = "ZenClientHitboxBounds"
+            proxy.Anchored = true
+            proxy.Transparency = 1
+            proxy.CanCollide = false
+            proxy.CanTouch = false
+            proxy.CanQuery = false
+            proxy.CastShadow = false
+            proxy.Size = Vector3.new(4, 6, 4)
+            proxy.Parent = workspace
+
             local fill = Instance.new("BoxHandleAdornment")
             fill.Name = "ZenClientHitboxVisual"
-            fill.Adornee = root
+            fill.Adornee = proxy
             fill.AlwaysOnTop = true
             fill.ZIndex = 10
             fill.Color3 = Color3.fromRGB(160, 70, 255)
             fill.Transparency = 0.58
-            fill.Parent = root
+            fill.Size = proxy.Size
+            fill.Parent = proxy
 
             local outline = Instance.new("SelectionBox")
             outline.Name = "ZenClientHitboxOutline"
-            outline.Adornee = root
+            outline.Adornee = proxy
             outline.Color3 = Color3.fromRGB(0, 0, 0)
             outline.LineThickness = 0.045
             outline.SurfaceTransparency = 1
-            outline.Parent = root
+            outline.Parent = proxy
 
-            visuals = { fill = fill, outline = outline }
+            visuals = { proxy = proxy, fill = fill, outline = outline }
             hitboxAdornments[character] = visuals
+
+            visuals.connection = RunService.RenderStepped:Connect(function()
+                if not hitboxEnabled or not character.Parent
+                    or not proxy.Parent or not humanoid.Parent
+                    or humanoid.Health <= 0 then
+                    clearHitboxVisual(character)
+                    return
+                end
+
+                local ok, boundsCFrame, extents = pcall(function()
+                    return character:GetBoundingBox()
+                end)
+                if ok and boundsCFrame and extents then
+                    local scaledSize = extents * (hitboxSizePercent / 100)
+                    proxy.CFrame = boundsCFrame
+                    proxy.Size = scaledSize
+                    fill.Size = scaledSize
+                    outline.Visible = true
+                end
+            end)
         end
 
-        local ok, extents = pcall(function()
-            return character:GetExtentsSize()
+        local ok, boundsCFrame, extents = pcall(function()
+            return character:GetBoundingBox()
         end)
-        if ok and extents then
+        if ok and boundsCFrame and extents then
             local scaledSize = extents * (hitboxSizePercent / 100)
+            visuals.proxy.CFrame = boundsCFrame
+            visuals.proxy.Size = scaledSize
             visuals.fill.Size = scaledSize
-            -- SelectionBox follows the root part; scale its adornee bounds to match.
-            visuals.outline.Adornee = root
             visuals.outline.Visible = true
         end
     end
