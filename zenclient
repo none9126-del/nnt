@@ -972,9 +972,10 @@ if i == 1 then
     addCorner(hitboxSliderKnob, 9)
 
     local function clearHitboxVisual(character)
-        local adornment = hitboxAdornments[character]
-        if adornment then
-            adornment:Destroy()
+        local visuals = hitboxAdornments[character]
+        if visuals then
+            if visuals.fill then visuals.fill:Destroy() end
+            if visuals.outline then visuals.outline:Destroy() end
             hitboxAdornments[character] = nil
         end
     end
@@ -996,33 +997,49 @@ if i == 1 then
             return
         end
 
-        local adornment = hitboxAdornments[character]
-        if not adornment or not adornment.Parent then
+        local visuals = hitboxAdornments[character]
+        if not visuals or not visuals.fill or not visuals.fill.Parent
+            or not visuals.outline or not visuals.outline.Parent then
             clearHitboxVisual(character)
-            adornment = Instance.new("BoxHandleAdornment")
-            adornment.Name = "ZenClientHitboxVisual"
-            adornment.Adornee = root
-            adornment.AlwaysOnTop = true
-            adornment.ZIndex = 10
-            adornment.Color3 = COLORS.NeonPurple
-            adornment.Transparency = 0.55
-            adornment.Parent = root
-            hitboxAdornments[character] = adornment
+
+            -- Translucent purple volume with a distinct black outline.
+            local fill = Instance.new("BoxHandleAdornment")
+            fill.Name = "ZenClientHitboxVisual"
+            fill.Adornee = root
+            fill.AlwaysOnTop = true
+            fill.ZIndex = 10
+            fill.Color3 = Color3.fromRGB(160, 70, 255)
+            fill.Transparency = 0.58
+            fill.Parent = root
+
+            local outline = Instance.new("SelectionBox")
+            outline.Name = "ZenClientHitboxOutline"
+            outline.Adornee = root
+            outline.Color3 = Color3.fromRGB(0, 0, 0)
+            outline.LineThickness = 0.045
+            outline.SurfaceTransparency = 1
+            outline.Parent = root
+
+            visuals = { fill = fill, outline = outline }
+            hitboxAdornments[character] = visuals
         end
 
         local ok, extents = pcall(function()
             return character:GetExtentsSize()
         end)
         if ok and extents then
-            adornment.Size = extents * (hitboxSizePercent / 100)
+            local scaledSize = extents * (hitboxSizePercent / 100)
+            visuals.fill.Size = scaledSize
+            -- SelectionBox follows the root part; scale its adornee bounds to match.
+            visuals.outline.Adornee = root
+            visuals.outline.Visible = true
         end
     end
 
     local function refreshHitboxVisuals()
         if not hitboxEnabled then
-            for character, adornment in pairs(hitboxAdornments) do
-                if adornment then adornment:Destroy() end
-                hitboxAdornments[character] = nil
+            for character in pairs(hitboxAdornments) do
+                clearHitboxVisual(character)
             end
             return
         end
