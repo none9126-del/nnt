@@ -835,6 +835,7 @@ if i == 1 then
     local hitboxEnabled = false
     local hitboxSizePercent = 100
     local hitboxAdornments = {}
+    local hitboxRenderConnection
     local lastHitboxRowTap = 0
 
     local hitboxRow = Instance.new("Frame")
@@ -974,114 +975,70 @@ if i == 1 then
     local function clearHitboxVisual(character)
         local visuals = hitboxAdornments[character]
         if visuals then
-            if visuals.connection then visuals.connection:Disconnect() end
-            if visuals.fill then visuals.fill:Destroy() end
-            if visuals.outline then visuals.outline:Destroy() end
-            if visuals.proxy then visuals.proxy:Destroy() end
+            if visuals.frame then visuals.frame:Destroy() end
             hitboxAdornments[character] = nil
         end
     end
 
+    -- Hitbox toggle now displays the original 2D screen-space box.
     local function updateHitboxVisual(otherPlayer)
         local character = otherPlayer and otherPlayer.Character
         if not character then return end
-
-        if not hitboxEnabled or otherPlayer == player then
-            clearHitboxVisual(character)
-            return
-        end
-
+        if not hitboxEnabled or otherPlayer == player then clearHitboxVisual(character); return end
         local humanoid = character:FindFirstChildOfClass("Humanoid")
-        local root = character:FindFirstChild("HumanoidRootPart")
-        if not humanoid or humanoid.Health <= 0
-            or not root or not root:IsA("BasePart") then
-            clearHitboxVisual(character)
-            return
-        end
-
+        if not humanoid or humanoid.Health <= 0 then clearHitboxVisual(character); return end
+        local camera = workspace.CurrentCamera
+        if not camera then return end
         local visuals = hitboxAdornments[character]
-        if not visuals or not visuals.proxy or not visuals.proxy.Parent
-            or not visuals.fill or not visuals.fill.Parent
-            or not visuals.outline or not visuals.outline.Parent then
-            clearHitboxVisual(character)
-
-            -- Invisible 3D proxy defines matching bounds for the purple volume
-            -- and the black SelectionBox outline.
-            local proxy = Instance.new("Part")
-            proxy.Name = "ZenClientHitboxBounds"
-            proxy.Anchored = true
-            proxy.Transparency = 1
-            proxy.CanCollide = false
-            proxy.CanTouch = false
-            proxy.CanQuery = false
-            proxy.CastShadow = false
-            proxy.Size = Vector3.new(4, 6, 4)
-            proxy.Parent = workspace
-
-            local fill = Instance.new("BoxHandleAdornment")
-            fill.Name = "ZenClientHitboxVisual"
-            fill.Adornee = proxy
-            fill.AlwaysOnTop = true
-            fill.ZIndex = 10
-            fill.Color3 = Color3.fromRGB(160, 70, 255)
-            fill.Transparency = 0.58
-            fill.Size = proxy.Size
-            fill.Parent = proxy
-
-            local outline = Instance.new("SelectionBox")
-            outline.Name = "ZenClientHitboxOutline"
-            outline.Adornee = proxy
-            outline.Color3 = Color3.fromRGB(0, 0, 0)
-            outline.LineThickness = 0.045
-            outline.SurfaceTransparency = 1
-            outline.Parent = proxy
-
-            visuals = { proxy = proxy, fill = fill, outline = outline }
+        if not visuals or not visuals.frame or not visuals.frame.Parent then
+            local frame = Instance.new("Frame")
+            frame.Name = "Hitbox2D_" .. tostring(otherPlayer.UserId)
+            frame.AnchorPoint = Vector2.new(0.5, 0.5)
+            frame.BackgroundColor3 = Color3.fromRGB(160, 70, 255)
+            frame.BackgroundTransparency = 0.78
+            frame.BorderSizePixel = 0
+            frame.Visible = false
+            frame.ZIndex = 87
+            frame.Parent = gui
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = Color3.fromRGB(0, 0, 0)
+            stroke.Thickness = 2
+            stroke.Parent = frame
+            visuals = {frame = frame}
             hitboxAdornments[character] = visuals
-
-            visuals.connection = RunService.RenderStepped:Connect(function()
-                if not hitboxEnabled or not character.Parent
-                    or not proxy.Parent or not humanoid.Parent
-                    or humanoid.Health <= 0 then
-                    clearHitboxVisual(character)
-                    return
-                end
-
-                local ok, boundsCFrame, extents = pcall(function()
-                    return character:GetBoundingBox()
-                end)
-                if ok and boundsCFrame and extents then
-                    local scaledSize = extents * (hitboxSizePercent / 100)
-                    proxy.CFrame = boundsCFrame
-                    proxy.Size = scaledSize
-                    fill.Size = scaledSize
-                    outline.Visible = true
-                end
-            end)
         end
-
-        local ok, boundsCFrame, extents = pcall(function()
-            return character:GetBoundingBox()
-        end)
-        if ok and boundsCFrame and extents then
-            local scaledSize = extents * (hitboxSizePercent / 100)
-            visuals.proxy.CFrame = boundsCFrame
-            visuals.proxy.Size = scaledSize
-            visuals.fill.Size = scaledSize
-            visuals.outline.Visible = true
+        local ok, cf, size = pcall(function() return character:GetBoundingBox() end)
+        if not ok or not cf or not size then visuals.frame.Visible = false; return end
+        size = size * (hitboxSizePercent / 100)
+        local half = size / 2
+        local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
+        local visible = false
+        for _, x in ipairs({-half.X, half.X}) do
+            for _, y in ipairs({-half.Y, half.Y}) do
+                for _, z in ipairs({-half.Z, half.Z}) do
+                    local pt = camera:WorldToViewportPoint(cf:PointToWorldSpace(Vector3.new(x,y,z)))
+                    if pt.Z > 0 then
+                        visible = true
+                        minX, minY = math.min(minX,pt.X), math.min(minY,pt.Y)
+                        maxX, maxY = math.max(maxX,pt.X), math.max(maxY,pt.Y)
+                    end
+                end
+            end
         end
+        local viewport = camera.ViewportSize
+        minX, minY = math.clamp(minX,0,viewport.X), math.clamp(minY,0,viewport.Y)
+        maxX, maxY = math.clamp(maxX,0,viewport.X), math.clamp(maxY,0,viewport.Y)
+        visuals.frame.Position = UDim2.fromOffset((minX+maxX)/2,(minY+maxY)/2)
+        visuals.frame.Size = UDim2.fromOffset(math.max(2,maxX-minX),math.max(2,maxY-minY))
+        visuals.frame.Visible = visible and maxX > minX and maxY > minY
     end
 
     local function refreshHitboxVisuals()
         if not hitboxEnabled then
-            for character in pairs(hitboxAdornments) do
-                clearHitboxVisual(character)
-            end
+            for character in pairs(hitboxAdornments) do clearHitboxVisual(character) end
             return
         end
-        for _, otherPlayer in ipairs(Players:GetPlayers()) do
-            updateHitboxVisual(otherPlayer)
-        end
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do updateHitboxVisual(otherPlayer) end
     end
 
     local function setHitboxSizeFromX(x)
@@ -1159,7 +1116,14 @@ if i == 1 then
 
     local function setHitboxEnabled(enabled)
         hitboxEnabled = enabled
-        refreshHitboxVisuals()
+        if hitboxRenderConnection then hitboxRenderConnection:Disconnect(); hitboxRenderConnection = nil end
+        if enabled then
+            hitboxRenderConnection = RunService.RenderStepped:Connect(function()
+                for _, otherPlayer in ipairs(Players:GetPlayers()) do updateHitboxVisual(otherPlayer) end
+            end)
+        else
+            refreshHitboxVisuals()
+        end
         TweenService:Create(
             hitboxSwitch,
             TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -2180,32 +2144,46 @@ do
         addCorner(boxKnob, 5)
 
         local function getBox(otherPlayer)
-            local box = playerBoxes[otherPlayer]
-            if not box or not box.Parent then
-                box = Instance.new("Frame")
-                box.Name = "ESPBox_" .. tostring(otherPlayer.UserId)
-                box.AnchorPoint = Vector2.new(0.5, 0.5)
-                box.BackgroundColor3 = COLORS.NeonPurple
-                box.BackgroundTransparency = 0.78
-                box.BorderSizePixel = 0
-                box.Visible = false
-                box.ZIndex = 88
-                box.Parent = gui
-                local outline = Instance.new("UIStroke")
-                outline.Name = "BlackOutline"
-                outline.Color = Color3.new(0, 0, 0)
-                outline.Thickness = 2
-                outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                outline.Parent = box
-                playerBoxes[otherPlayer] = box
+            local visuals = playerBoxes[otherPlayer]
+            if not visuals or not visuals.proxy or not visuals.proxy.Parent then
+                local proxy = Instance.new("Part")
+                proxy.Name = "ESPBox3D_" .. tostring(otherPlayer.UserId)
+                proxy.Anchored = true
+                proxy.Transparency = 1
+                proxy.CanCollide = false
+                proxy.CanTouch = false
+                proxy.CanQuery = false
+                proxy.CastShadow = false
+                proxy.Size = Vector3.new(4, 6, 4)
+                proxy.Parent = workspace
+                local fill = Instance.new("BoxHandleAdornment")
+                fill.Name = "Purple3DFill"
+                fill.Adornee = proxy
+                fill.AlwaysOnTop = true
+                fill.ZIndex = 10
+                fill.Color3 = Color3.fromRGB(160, 70, 255)
+                fill.Transparency = 0.58
+                fill.Size = proxy.Size
+                fill.Parent = proxy
+                local outline = Instance.new("SelectionBox")
+                outline.Name = "Black3DOutline"
+                outline.Adornee = proxy
+                outline.Color3 = Color3.fromRGB(0, 0, 0)
+                outline.LineThickness = 0.045
+                outline.SurfaceTransparency = 1
+                outline.Parent = proxy
+                visuals = {proxy = proxy, fill = fill, outline = outline}
+                playerBoxes[otherPlayer] = visuals
             end
-            return box
+            return visuals
         end
 
         local function updateBoxes()
-            local camera = workspace.CurrentCamera
-            if not boxEnabled or not camera then
-                for _, box in pairs(playerBoxes) do box.Visible = false end
+            if not boxEnabled then
+                for _, visuals in pairs(playerBoxes) do
+                    if visuals.proxy then visuals.proxy.Transparency = 1 end
+                    if visuals.outline then visuals.outline.Visible = false end
+                end
                 return
             end
             local active = {}
@@ -2213,54 +2191,26 @@ do
                 if otherPlayer ~= player then
                     local character = otherPlayer.Character
                     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-                    local root = character and character:FindFirstChild("HumanoidRootPart")
-                    if humanoid and humanoid.Health > 0 and root then
-                        local cf, size = character:GetBoundingBox()
-                        local half = size / 2
-                        local minX, minY = math.huge, math.huge
-                        local maxX, maxY = -math.huge, -math.huge
-                        local anyInFront = false
-                        for _, x in ipairs({-half.X, half.X}) do
-                            for _, y in ipairs({-half.Y, half.Y}) do
-                                for _, z in ipairs({-half.Z, half.Z}) do
-                                    local worldCorner = cf:PointToWorldSpace(Vector3.new(x, y, z))
-                                    local point, onScreen = camera:WorldToViewportPoint(worldCorner)
-                                    if point.Z > 0 then
-                                        anyInFront = true
-                                        minX = math.min(minX, point.X)
-                                        minY = math.min(minY, point.Y)
-                                        maxX = math.max(maxX, point.X)
-                                        maxY = math.max(maxY, point.Y)
-                                    end
-                                end
-                            end
-                        end
-                        local box = getBox(otherPlayer)
-                        if anyInFront and maxX > minX and maxY > minY then
-                            local viewport = camera.ViewportSize
-                            minX = math.clamp(minX, 0, viewport.X)
-                            maxX = math.clamp(maxX, 0, viewport.X)
-                            minY = math.clamp(minY, 0, viewport.Y)
-                            maxY = math.clamp(maxY, 0, viewport.Y)
-                            box.Position = UDim2.fromOffset((minX + maxX) / 2, (minY + maxY) / 2)
-                            box.Size = UDim2.fromOffset(math.max(2, maxX - minX), math.max(2, maxY - minY))
-                            box.Visible = maxX > minX and maxY > minY
+                    if character and humanoid and humanoid.Health > 0 then
+                        local ok, cf, size = pcall(function() return character:GetBoundingBox() end)
+                        if ok and cf and size then
+                            local visuals = getBox(otherPlayer)
+                            visuals.proxy.CFrame = cf
+                            visuals.proxy.Size = size
+                            visuals.fill.Size = size
+                            visuals.outline.Visible = true
                             active[otherPlayer] = true
-                        else
-                            box.Visible = false
                         end
-                    else
-                        local box = playerBoxes[otherPlayer]
-                        if box then box.Visible = false end
                     end
                 end
             end
-            for otherPlayer, box in pairs(playerBoxes) do
+            for otherPlayer, visuals in pairs(playerBoxes) do
                 if not otherPlayer.Parent or otherPlayer == player then
-                    box:Destroy()
+                    if visuals.proxy then visuals.proxy:Destroy() end
                     playerBoxes[otherPlayer] = nil
                 elseif not active[otherPlayer] then
-                    box.Visible = false
+                    if visuals.proxy then visuals.proxy:Destroy() end
+                    playerBoxes[otherPlayer] = nil
                 end
             end
         end
@@ -2283,7 +2233,7 @@ do
         boxSwitch.Activated:Connect(function() setBoxEnabled(not boxEnabled) end)
         gui.Destroying:Connect(function()
             if boxConnection then boxConnection:Disconnect() end
-            for _, box in pairs(playerBoxes) do if box then box:Destroy() end end
+            for _, visuals in pairs(playerBoxes) do if visuals and visuals.proxy then visuals.proxy:Destroy() end end
         end)
     end
 end
