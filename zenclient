@@ -2319,11 +2319,7 @@ do
             end
             local outline = boxOutlines[character]
             if outline then
-                local proxy = outline.Adornee
                 outline:Destroy()
-                if proxy and proxy:IsA("BasePart") and proxy.Name == "ZenClientESPBoxOutlineProxy" then
-                    proxy:Destroy()
-                end
                 boxOutlines[character] = nil
             end
         end
@@ -2351,54 +2347,28 @@ do
                 adornment.Adornee = root
                 adornment.AlwaysOnTop = true
                 adornment.ZIndex = 10
-                adornment.Color3 = Color3.fromRGB(190, 80, 255)
+                adornment.Color3 = Color3.fromRGB(145, 55, 255)
                 adornment.Transparency = 0.48
                 adornment.Parent = root
                 boxAdornments[character] = adornment
 
-                -- A transparent proxy follows the character bounds so the black
-                -- SelectionBox outlines the same tall, narrow box as the purple fill.
-                local proxy = Instance.new("Part")
-                proxy.Name = "ZenClientESPBoxOutlineProxy"
-                proxy.Transparency = 1
-                proxy.Anchored = false
-                proxy.CanCollide = false
-                proxy.CanTouch = false
-                proxy.CanQuery = false
-                proxy.Massless = true
-                proxy.CastShadow = false
-                proxy.Size = Vector3.new(2, 5, 1)
-                proxy.CFrame = root.CFrame
-                proxy.Parent = character
-                local weld = Instance.new("WeldConstraint")
-                weld.Part0 = root
-                weld.Part1 = proxy
-                weld.Parent = proxy
                 local outline = Instance.new("SelectionBox")
                 outline.Name = "ZenClientESPBoxBlackOutline"
-                outline.Adornee = proxy
+                outline.Adornee = root
                 outline.Color3 = Color3.fromRGB(0, 0, 0)
-                outline.LineThickness = 0.035
+                outline.LineThickness = 0.045
                 outline.SurfaceTransparency = 1
                 outline.Transparency = 0
-                outline.Parent = proxy
+                outline.Parent = root
                 boxOutlines[character] = outline
             end
 
-            local _, boundsSize = character:GetBoundingBox()
-            local scale = boxSizePercent / 100
-            -- Start as a small rectangle and grow toward the character's natural bounds.
-            local minSize = Vector3.new(0.25, 0.25, 0.25)
-            local visualSize = minSize:Lerp(boundsSize + Vector3.new(0.25, 0.35, 0.25), scale)
+            local side = 0.5 + 5.5 * (boxSizePercent / 100)
+            local visualSize = Vector3.new(side, side, side)
             adornment.Size = visualSize
-            adornment.CFrame = root.CFrame:ToObjectSpace(select(1, character:GetBoundingBox()))
             local outline = boxOutlines[character]
-            local proxy = outline and outline.Adornee
-            if proxy and proxy:IsA("BasePart") then
-                proxy.Size = visualSize
-                proxy.CFrame = root.CFrame * adornment.CFrame
-            end
             if outline then
+                outline.Adornee = root
                 outline.Visible = true
             end
         end
