@@ -1475,7 +1475,7 @@ do
     local combatPanel = panels and panels[1]
     if combatPanel then
         local hitboxEnabled = false
-        local hitboxSizePercent = 100
+        local hitboxSizePercent = 0
         local hitboxVisuals = {}
         local lastHitboxTap = 0
 
@@ -1574,7 +1574,7 @@ do
         hitboxValue.BackgroundTransparency = 1
         hitboxValue.Position = UDim2.fromOffset(14, 48)
         hitboxValue.Size = UDim2.new(1, -28, 0, 24)
-        hitboxValue.Text = "Size: 100%"
+        hitboxValue.Text = "Size: 0%"
         hitboxValue.TextColor3 = COLORS.LightPurple
         hitboxValue.Font = Enum.Font.GothamSemibold
         hitboxValue.TextSize = 14
@@ -1596,7 +1596,7 @@ do
 
         local hitboxFill = Instance.new("Frame")
         hitboxFill.Name = "SliderFill"
-        hitboxFill.Size = UDim2.new(100 / 200, 0, 1, 0)
+        hitboxFill.Size = UDim2.new(0, 0, 1, 0)
         hitboxFill.BackgroundColor3 = COLORS.NeonPurple
         hitboxFill.BorderSizePixel = 0
         hitboxFill.ZIndex = 63
@@ -1606,7 +1606,7 @@ do
         local hitboxSliderKnob = Instance.new("Frame")
         hitboxSliderKnob.Name = "SliderKnob"
         hitboxSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-        hitboxSliderKnob.Position = UDim2.new(100 / 200, 0, 0.5, 0)
+        hitboxSliderKnob.Position = UDim2.new(0, 0, 0.5, 0)
         hitboxSliderKnob.Size = UDim2.fromOffset(18, 18)
         hitboxSliderKnob.BackgroundColor3 = COLORS.White
         hitboxSliderKnob.BorderSizePixel = 0
@@ -1645,16 +1645,9 @@ do
                 adornment.Parent = root
                 hitboxVisuals[character] = adornment
             end
-            local scale = math.clamp(hitboxSizePercent / 100, 0.01, 2)
-            -- Visual-only sizing: follow the target's body proportions.
-            local _, boundsSize = character:GetBoundingBox()
-            adornment.Size = Vector3.new(
-                math.max(0.1, boundsSize.X * scale),
-                math.max(0.1, boundsSize.Y * scale),
-                math.max(0.1, boundsSize.Z * scale)
-            )
-            local boundsCFrame = select(1, character:GetBoundingBox())
-            adornment.CFrame = root.CFrame:ToObjectSpace(boundsCFrame)
+            local scale = hitboxSizePercent / 100
+            local side = 0.5 + 5.5 * scale
+            adornment.Size = Vector3.new(side, side, side)
             adornment.Visible = hitboxEnabled
         end
 
@@ -1675,11 +1668,10 @@ do
             local width = hitboxSlider.AbsoluteSize.X
             if width <= 0 then return end
             local alpha = math.clamp((x - hitboxSlider.AbsolutePosition.X) / width, 0, 1)
-            hitboxSizePercent = math.clamp(math.floor(alpha * 200 + 0.5), 1, 200)
-            local normalized = hitboxSizePercent / 200
+            hitboxSizePercent = math.floor(alpha * 100 + 0.5)
             hitboxValue.Text = "Size: " .. hitboxSizePercent .. "%"
-            hitboxFill.Size = UDim2.new(normalized, 0, 1, 0)
-            hitboxSliderKnob.Position = UDim2.new(normalized, 0, 0.5, 0)
+            hitboxFill.Size = UDim2.new(alpha, 0, 1, 0)
+            hitboxSliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
             refreshHitboxVisuals()
         end
 
@@ -2179,7 +2171,7 @@ do
     local renderPanel = panels and panels[3]
     if renderPanel then
         local boxEnabled = false
-        local boxSizePercent = 100
+        local boxSizePercent = 0
         local boxAdornments = {}
         local boxOutlines = {}
         local lastBoxRowTap = 0
@@ -2301,7 +2293,7 @@ do
 
         local boxSliderFill = Instance.new("Frame")
         boxSliderFill.Name = "SliderFill"
-        boxSliderFill.Size = UDim2.new(boxSizePercent / 200, 0, 1, 0)
+        boxSliderFill.Size = UDim2.new(boxSizePercent / 100, 0, 1, 0)
         boxSliderFill.BackgroundColor3 = COLORS.NeonPurple
         boxSliderFill.BorderSizePixel = 0
         boxSliderFill.ZIndex = 63
@@ -2311,7 +2303,7 @@ do
         local boxSliderKnob = Instance.new("Frame")
         boxSliderKnob.Name = "SliderKnob"
         boxSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-        boxSliderKnob.Position = UDim2.new(boxSizePercent / 200, 0, 0.5, 0)
+        boxSliderKnob.Position = UDim2.new(boxSizePercent / 100, 0, 0.5, 0)
         boxSliderKnob.Size = UDim2.fromOffset(18, 18)
         boxSliderKnob.BackgroundColor3 = COLORS.White
         boxSliderKnob.BorderSizePixel = 0
@@ -2393,22 +2385,18 @@ do
                 boxOutlines[character] = outline
             end
 
-            local boundsCFrame, boundsSize = character:GetBoundingBox()
-            local scale = math.clamp(boxSizePercent / 100, 0.01, 2)
-            -- Keep the box body-shaped and scale all dimensions together.
-            local visualSize = Vector3.new(
-                math.max(0.1, boundsSize.X * scale),
-                math.max(0.1, boundsSize.Y * scale),
-                math.max(0.1, boundsSize.Z * scale)
-            )
-            local relativeCFrame = root.CFrame:ToObjectSpace(boundsCFrame)
+            local _, boundsSize = character:GetBoundingBox()
+            local scale = boxSizePercent / 100
+            -- Start as a small rectangle and grow toward the character's natural bounds.
+            local minSize = Vector3.new(0.25, 0.25, 0.25)
+            local visualSize = minSize:Lerp(boundsSize + Vector3.new(0.25, 0.35, 0.25), scale)
             adornment.Size = visualSize
-            adornment.CFrame = relativeCFrame
+            adornment.CFrame = root.CFrame:ToObjectSpace(select(1, character:GetBoundingBox()))
             local outline = boxOutlines[character]
             local proxy = outline and outline.Adornee
             if proxy and proxy:IsA("BasePart") then
                 proxy.Size = visualSize
-                proxy.CFrame = boundsCFrame
+                proxy.CFrame = root.CFrame * adornment.CFrame
             end
             if outline then
                 outline.Visible = true
@@ -2434,8 +2422,8 @@ do
             local trackWidth = boxSlider.AbsoluteSize.X
             if trackWidth <= 0 then return end
             local alpha = math.clamp((x - boxSlider.AbsolutePosition.X) / trackWidth, 0, 1)
-            boxSizePercent = math.clamp(math.floor(alpha * 200 + 0.5), 1, 200)
-            local normalized = boxSizePercent / 200
+            boxSizePercent = math.floor(alpha * 100 + 0.5)
+            local normalized = boxSizePercent / 100
             boxValue.Text = "Size: " .. boxSizePercent .. "%"
             boxSliderFill.Size = UDim2.new(normalized, 0, 1, 0)
             boxSliderKnob.Position = UDim2.new(normalized, 0, 0.5, 0)
