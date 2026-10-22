@@ -287,7 +287,7 @@ panelLayout.SortOrder = Enum.SortOrder.LayoutOrder
 panelLayout.Padding = UDim.new(0, CONFIG.PanelGap)
 panelLayout.Parent = panelContainer
 
-local PANEL_LABELS = { "Combat", "Player", "Render", "Misc", "?" }
+local PANEL_LABELS = { "Combat", "Player", "Render", "Misc", "BETA" }
 local panels = {}
 
 
@@ -835,7 +835,6 @@ if i == 1 then
     local hitboxEnabled = false
     local hitboxSizePercent = 100
     local hitboxAdornments = {}
-    local hitboxRenderConnection
     local lastHitboxRowTap = 0
 
     local hitboxRow = Instance.new("Frame")
@@ -973,18 +972,17 @@ if i == 1 then
     addCorner(hitboxSliderKnob, 9)
 
     local function clearHitboxVisual(character)
-        local visuals = hitboxAdornments[character]
-        if visuals then
-            if visuals.proxy then visuals.proxy:Destroy() end
+        local adornment = hitboxAdornments[character]
+        if adornment then
+            adornment:Destroy()
             hitboxAdornments[character] = nil
         end
     end
 
-    -- Hitbox toggle: client-side 3D VISUAL ONLY; does not change real collision.
-    -- Styled with the ZenClient purple Neon theme.
     local function updateHitboxVisual(otherPlayer)
         local character = otherPlayer and otherPlayer.Character
         if not character then return end
+
         if not hitboxEnabled or otherPlayer == player then
             clearHitboxVisual(character)
             return
@@ -992,58 +990,45 @@ if i == 1 then
 
         local humanoid = character:FindFirstChildOfClass("Humanoid")
         local root = character:FindFirstChild("HumanoidRootPart")
-        if not humanoid or humanoid.Health <= 0 or not root or not root:IsA("BasePart") then
+        if not humanoid or humanoid.Health <= 0
+            or not root or not root:IsA("BasePart") then
             clearHitboxVisual(character)
             return
         end
 
-        local visuals = hitboxAdornments[character]
-        if not visuals or not visuals.proxy or not visuals.proxy.Parent then
-            local proxy = Instance.new("Part")
-            proxy.Name = "Hitbox3DVisual_" .. tostring(otherPlayer.UserId)
-            proxy.Anchored = true
-            proxy.Transparency = 1
-            proxy.CanCollide = false
-            proxy.CanTouch = false
-            proxy.CanQuery = false
-            proxy.CastShadow = false
-            proxy.Size = Vector3.new(4, 4, 4)
-            proxy.Parent = workspace
-
-            local fill = Instance.new("BoxHandleAdornment")
-            fill.Name = "PurpleNeon3DFill"
-            fill.Adornee = proxy
-            fill.AlwaysOnTop = true
-            fill.ZIndex = 10
-            fill.Color3 = Color3.fromRGB(105, 35, 220)
-            fill.Transparency = 0.58
-            fill.Size = proxy.Size
-            fill.Parent = proxy
-
-            local outline = Instance.new("SelectionBox")
-            outline.Name = "Purple3DOutline"
-            outline.Adornee = proxy
-            outline.Color3 = Color3.fromRGB(190, 125, 255)
-            outline.LineThickness = 0.045
-            outline.SurfaceTransparency = 1
-            outline.Parent = proxy
-            visuals = {proxy = proxy, fill = fill, outline = outline}
-            hitboxAdornments[character] = visuals
+        local adornment = hitboxAdornments[character]
+        if not adornment or not adornment.Parent then
+            clearHitboxVisual(character)
+            adornment = Instance.new("BoxHandleAdornment")
+            adornment.Name = "ZenClientHitboxVisual"
+            adornment.Adornee = root
+            adornment.AlwaysOnTop = true
+            adornment.ZIndex = 10
+            adornment.Color3 = COLORS.NeonPurple
+            adornment.Transparency = 0.55
+            adornment.Parent = root
+            hitboxAdornments[character] = adornment
         end
 
-        local size = root.Size * (hitboxSizePercent / 100)
-        visuals.proxy.CFrame = root.CFrame
-        visuals.proxy.Size = size
-        visuals.fill.Size = size
-        visuals.outline.Visible = true
+        local ok, extents = pcall(function()
+            return character:GetExtentsSize()
+        end)
+        if ok and extents then
+            adornment.Size = extents * (hitboxSizePercent / 100)
+        end
     end
 
     local function refreshHitboxVisuals()
         if not hitboxEnabled then
-            for character in pairs(hitboxAdornments) do clearHitboxVisual(character) end
+            for character, adornment in pairs(hitboxAdornments) do
+                if adornment then adornment:Destroy() end
+                hitboxAdornments[character] = nil
+            end
             return
         end
-        for _, otherPlayer in ipairs(Players:GetPlayers()) do updateHitboxVisual(otherPlayer) end
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do
+            updateHitboxVisual(otherPlayer)
+        end
     end
 
     local function setHitboxSizeFromX(x)
@@ -1121,14 +1106,7 @@ if i == 1 then
 
     local function setHitboxEnabled(enabled)
         hitboxEnabled = enabled
-        if hitboxRenderConnection then hitboxRenderConnection:Disconnect(); hitboxRenderConnection = nil end
-        if enabled then
-            hitboxRenderConnection = RunService.RenderStepped:Connect(function()
-                for _, otherPlayer in ipairs(Players:GetPlayers()) do updateHitboxVisual(otherPlayer) end
-            end)
-        else
-            refreshHitboxVisuals()
-        end
+        refreshHitboxVisuals()
         TweenService:Create(
             hitboxSwitch,
             TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -1811,6 +1789,134 @@ menuButton.Activated:Connect(function()
 setMenuOpen(not menuOpen)
 end)
 
+-- BETA panel password gate
+local betaUnlocked = false
+local betaPassword = "airport"
+local betaOverlay = Instance.new("Frame")
+betaOverlay.Name = "BETAPasswordOverlay"
+betaOverlay.Size = UDim2.fromScale(1, 1)
+betaOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+betaOverlay.BackgroundTransparency = 0.3
+betaOverlay.BorderSizePixel = 0
+betaOverlay.Visible = false
+betaOverlay.ZIndex = 120
+betaOverlay.Parent = gui
+
+local betaCard = Instance.new("Frame")
+betaCard.Name = "BETAPasswordCard"
+betaCard.AnchorPoint = Vector2.new(0.5, 0.5)
+betaCard.Position = UDim2.fromScale(0.5, 0.5)
+betaCard.Size = UDim2.new(0.82, 0, 0, 205)
+betaCard.BackgroundColor3 = COLORS.Background
+betaCard.BorderSizePixel = 0
+betaCard.ZIndex = 121
+betaCard.Parent = betaOverlay
+addCorner(betaCard, 12)
+addStroke(betaCard, COLORS.NeonPurple, 1.5)
+local betaCardConstraint = Instance.new("UISizeConstraint")
+betaCardConstraint.MaxSize = Vector2.new(360, 205)
+betaCardConstraint.MinSize = Vector2.new(240, 205)
+betaCardConstraint.Parent = betaCard
+
+local betaTitle = Instance.new("TextLabel")
+betaTitle.BackgroundTransparency = 1
+betaTitle.Position = UDim2.fromOffset(14, 14)
+betaTitle.Size = UDim2.new(1, -28, 0, 28)
+betaTitle.Text = "BETA — Password Required"
+betaTitle.TextColor3 = COLORS.White
+betaTitle.Font = Enum.Font.GothamBold
+betaTitle.TextSize = 16
+betaTitle.ZIndex = 122
+betaTitle.Parent = betaCard
+
+local betaHint = Instance.new("TextLabel")
+betaHint.BackgroundTransparency = 1
+betaHint.Position = UDim2.fromOffset(14, 45)
+betaHint.Size = UDim2.new(1, -28, 0, 22)
+betaHint.Text = "Enter password to unlock BETA"
+betaHint.TextColor3 = COLORS.LightPurple
+betaHint.Font = Enum.Font.Gotham
+betaHint.TextSize = 12
+betaHint.ZIndex = 122
+betaHint.Parent = betaCard
+
+local betaInput = Instance.new("TextBox")
+betaInput.Name = "BETAPasswordInput"
+betaInput.Position = UDim2.new(0, 16, 0, 77)
+betaInput.Size = UDim2.new(1, -32, 0, 36)
+betaInput.BackgroundColor3 = Color3.fromRGB(35, 22, 65)
+betaInput.BorderSizePixel = 0
+betaInput.PlaceholderText = "Password"
+betaInput.Text = ""
+betaInput.ClearTextOnFocus = false
+betaInput.TextColor3 = COLORS.White
+betaInput.PlaceholderColor3 = COLORS.LightPurple
+betaInput.Font = Enum.Font.Gotham
+betaInput.TextSize = 14
+betaInput.ZIndex = 122
+betaInput.Parent = betaCard
+addCorner(betaInput, 8)
+addStroke(betaInput, COLORS.Purple, 1)
+
+local betaStatus = Instance.new("TextLabel")
+betaStatus.BackgroundTransparency = 1
+betaStatus.Position = UDim2.new(0, 14, 0, 117)
+betaStatus.Size = UDim2.new(1, -28, 0, 22)
+betaStatus.Text = ""
+betaStatus.TextColor3 = COLORS.Red
+betaStatus.Font = Enum.Font.Gotham
+betaStatus.TextSize = 12
+betaStatus.ZIndex = 122
+betaStatus.Parent = betaCard
+
+local betaConfirm = Instance.new("TextButton")
+betaConfirm.Name = "BETAConfirmButton"
+betaConfirm.AnchorPoint = Vector2.new(0.5, 1)
+betaConfirm.Position = UDim2.new(0.5, 0, 1, -12)
+betaConfirm.Size = UDim2.new(1, -32, 0, 36)
+betaConfirm.BackgroundColor3 = COLORS.Purple
+betaConfirm.BorderSizePixel = 0
+betaConfirm.Text = "CONFIRM"
+betaConfirm.TextColor3 = COLORS.White
+betaConfirm.Font = Enum.Font.GothamBold
+betaConfirm.TextSize = 14
+betaConfirm.ZIndex = 122
+betaConfirm.Parent = betaCard
+addCorner(betaConfirm, 8)
+addStroke(betaConfirm, COLORS.NeonPurple, 1)
+
+local function attemptBetaUnlock()
+    if betaInput.Text == betaPassword then
+        betaUnlocked = true
+        betaStatus.TextColor3 = COLORS.Green
+        betaStatus.Text = "BETA unlocked"
+        betaOverlay.Visible = false
+        panels[5]:SetAttribute("Unlocked", true)
+    else
+        betaStatus.TextColor3 = COLORS.Red
+        betaStatus.Text = "Incorrect password"
+        betaInput.Text = ""
+        betaInput:CaptureFocus()
+    end
+end
+
+betaConfirm.Activated:Connect(attemptBetaUnlock)
+betaInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then attemptBetaUnlock() end
+end)
+
+if panels[5] then
+    panels[5].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            if not betaUnlocked then
+                betaOverlay.Visible = true
+                betaInput:CaptureFocus()
+            end
+        end
+    end)
+end
+
 
 local function updateLayout()
 local camera = workspace.CurrentCamera
@@ -2149,46 +2255,32 @@ do
         addCorner(boxKnob, 5)
 
         local function getBox(otherPlayer)
-            local visuals = playerBoxes[otherPlayer]
-            if not visuals or not visuals.proxy or not visuals.proxy.Parent then
-                local proxy = Instance.new("Part")
-                proxy.Name = "ESPBox3D_" .. tostring(otherPlayer.UserId)
-                proxy.Anchored = true
-                proxy.Transparency = 1
-                proxy.CanCollide = false
-                proxy.CanTouch = false
-                proxy.CanQuery = false
-                proxy.CastShadow = false
-                proxy.Size = Vector3.new(4, 6, 4)
-                proxy.Parent = workspace
-                local fill = Instance.new("BoxHandleAdornment")
-                fill.Name = "Purple3DFill"
-                fill.Adornee = proxy
-                fill.AlwaysOnTop = true
-                fill.ZIndex = 10
-                fill.Color3 = Color3.fromRGB(160, 70, 255)
-                fill.Transparency = 0.58
-                fill.Size = proxy.Size
-                fill.Parent = proxy
-                local outline = Instance.new("SelectionBox")
-                outline.Name = "Purple3DOutline"
-                outline.Adornee = proxy
-                outline.Color3 = Color3.fromRGB(210, 150, 255)
-                outline.LineThickness = 0.045
-                outline.SurfaceTransparency = 1
-                outline.Parent = proxy
-                visuals = {proxy = proxy, fill = fill, outline = outline}
-                playerBoxes[otherPlayer] = visuals
+            local box = playerBoxes[otherPlayer]
+            if not box or not box.Parent then
+                box = Instance.new("Frame")
+                box.Name = "ESPBox_" .. tostring(otherPlayer.UserId)
+                box.AnchorPoint = Vector2.new(0.5, 0.5)
+                box.BackgroundColor3 = COLORS.NeonPurple
+                box.BackgroundTransparency = 0.78
+                box.BorderSizePixel = 0
+                box.Visible = false
+                box.ZIndex = 88
+                box.Parent = gui
+                local outline = Instance.new("UIStroke")
+                outline.Name = "BlackOutline"
+                outline.Color = Color3.new(0, 0, 0)
+                outline.Thickness = 2
+                outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                outline.Parent = box
+                playerBoxes[otherPlayer] = box
             end
-            return visuals
+            return box
         end
 
         local function updateBoxes()
-            if not boxEnabled then
-                for _, visuals in pairs(playerBoxes) do
-                    if visuals.proxy then visuals.proxy.Transparency = 1 end
-                    if visuals.outline then visuals.outline.Visible = false end
-                end
+            local camera = workspace.CurrentCamera
+            if not boxEnabled or not camera then
+                for _, box in pairs(playerBoxes) do box.Visible = false end
                 return
             end
             local active = {}
@@ -2196,26 +2288,54 @@ do
                 if otherPlayer ~= player then
                     local character = otherPlayer.Character
                     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-                    if character and humanoid and humanoid.Health > 0 then
-                        local ok, cf, size = pcall(function() return character:GetBoundingBox() end)
-                        if ok and cf and size then
-                            local visuals = getBox(otherPlayer)
-                            visuals.proxy.CFrame = cf
-                            visuals.proxy.Size = size
-                            visuals.fill.Size = size
-                            visuals.outline.Visible = true
-                            active[otherPlayer] = true
+                    local root = character and character:FindFirstChild("HumanoidRootPart")
+                    if humanoid and humanoid.Health > 0 and root then
+                        local cf, size = character:GetBoundingBox()
+                        local half = size / 2
+                        local minX, minY = math.huge, math.huge
+                        local maxX, maxY = -math.huge, -math.huge
+                        local anyInFront = false
+                        for _, x in ipairs({-half.X, half.X}) do
+                            for _, y in ipairs({-half.Y, half.Y}) do
+                                for _, z in ipairs({-half.Z, half.Z}) do
+                                    local worldCorner = cf:PointToWorldSpace(Vector3.new(x, y, z))
+                                    local point, onScreen = camera:WorldToViewportPoint(worldCorner)
+                                    if point.Z > 0 then
+                                        anyInFront = true
+                                        minX = math.min(minX, point.X)
+                                        minY = math.min(minY, point.Y)
+                                        maxX = math.max(maxX, point.X)
+                                        maxY = math.max(maxY, point.Y)
+                                    end
+                                end
+                            end
                         end
+                        local box = getBox(otherPlayer)
+                        if anyInFront and maxX > minX and maxY > minY then
+                            local viewport = camera.ViewportSize
+                            minX = math.clamp(minX, 0, viewport.X)
+                            maxX = math.clamp(maxX, 0, viewport.X)
+                            minY = math.clamp(minY, 0, viewport.Y)
+                            maxY = math.clamp(maxY, 0, viewport.Y)
+                            box.Position = UDim2.fromOffset((minX + maxX) / 2, (minY + maxY) / 2)
+                            box.Size = UDim2.fromOffset(math.max(2, maxX - minX), math.max(2, maxY - minY))
+                            box.Visible = maxX > minX and maxY > minY
+                            active[otherPlayer] = true
+                        else
+                            box.Visible = false
+                        end
+                    else
+                        local box = playerBoxes[otherPlayer]
+                        if box then box.Visible = false end
                     end
                 end
             end
-            for otherPlayer, visuals in pairs(playerBoxes) do
+            for otherPlayer, box in pairs(playerBoxes) do
                 if not otherPlayer.Parent or otherPlayer == player then
-                    if visuals.proxy then visuals.proxy:Destroy() end
+                    box:Destroy()
                     playerBoxes[otherPlayer] = nil
                 elseif not active[otherPlayer] then
-                    if visuals.proxy then visuals.proxy:Destroy() end
-                    playerBoxes[otherPlayer] = nil
+                    box.Visible = false
                 end
             end
         end
@@ -2238,7 +2358,7 @@ do
         boxSwitch.Activated:Connect(function() setBoxEnabled(not boxEnabled) end)
         gui.Destroying:Connect(function()
             if boxConnection then boxConnection:Disconnect() end
-            for _, visuals in pairs(playerBoxes) do if visuals and visuals.proxy then visuals.proxy:Destroy() end end
+            for _, box in pairs(playerBoxes) do if box then box:Destroy() end end
         end)
     end
 end
