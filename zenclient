@@ -1467,9 +1467,152 @@ menuButton.Activated:Connect(function()
 setMenuOpen(not menuOpen)
 end)
 
+--==================================================
+-- ZenClient BETA v14 - Combat Hitbox toggle
+-- The supplied hitbox snippet is kept verbatim inside startHitboxScript().
+--==================================================
+do
+    local combatPanel = panels and panels[1]
+    if combatPanel then
+        local hitboxEnabled = false
+        local lastHitboxTap = 0
+        local hitboxConnections = {}
+
+        local hitboxRow = Instance.new("Frame")
+        hitboxRow.Name = "HitboxRow"
+        hitboxRow.AnchorPoint = Vector2.new(0.5, 0)
+        hitboxRow.Position = UDim2.new(0.5, 0, 0, 121)
+        hitboxRow.Size = UDim2.new(1, -12, 0, 30)
+        hitboxRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
+        hitboxRow.BorderSizePixel = 0
+        hitboxRow.ZIndex = 13
+        hitboxRow.Parent = combatPanel
+        addCorner(hitboxRow, 6)
+        local hitboxRowStroke = addStroke(hitboxRow, COLORS.Purple, 1)
+
+        local hitboxLabel = Instance.new("TextButton")
+        hitboxLabel.Name = "HitboxLabel"
+        hitboxLabel.Position = UDim2.fromOffset(7, 0)
+        hitboxLabel.Size = UDim2.new(1, -43, 1, 0)
+        hitboxLabel.BackgroundTransparency = 1
+        hitboxLabel.Text = "Hitbox"
+        hitboxLabel.TextColor3 = COLORS.LightPurple
+        hitboxLabel.Font = Enum.Font.GothamBold
+        hitboxLabel.TextSize = 10
+        hitboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+        hitboxLabel.AutoButtonColor = false
+        hitboxLabel.ZIndex = 14
+        hitboxLabel.Parent = hitboxRow
+
+        local hitboxSwitch = Instance.new("TextButton")
+        hitboxSwitch.Name = "HitboxSwitch"
+        hitboxSwitch.AnchorPoint = Vector2.new(1, 0.5)
+        hitboxSwitch.Position = UDim2.new(1, -5, 0.5, 0)
+        hitboxSwitch.Size = UDim2.fromOffset(25, 14)
+        hitboxSwitch.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
+        hitboxSwitch.BorderSizePixel = 0
+        hitboxSwitch.Text = ""
+        hitboxSwitch.AutoButtonColor = false
+        hitboxSwitch.ZIndex = 15
+        hitboxSwitch.Parent = hitboxRow
+        addCorner(hitboxSwitch, 7)
+        local hitboxSwitchStroke = addStroke(hitboxSwitch, COLORS.NeonPurple, 1)
+        local hitboxKnob = Instance.new("Frame")
+        hitboxKnob.Name = "SwitchKnob"
+        hitboxKnob.AnchorPoint = Vector2.new(0, 0.5)
+        hitboxKnob.Position = UDim2.new(0, 2, 0.5, 0)
+        hitboxKnob.Size = UDim2.fromOffset(10, 10)
+        hitboxKnob.BackgroundColor3 = COLORS.LightPurple
+        hitboxKnob.BorderSizePixel = 0
+        hitboxKnob.ZIndex = 16
+        hitboxKnob.Parent = hitboxSwitch
+        addCorner(hitboxKnob, 5)
+
+        local function startHitboxScript()
+            local Players = game:GetService("Players")
+            local LocalPlayer = Players.LocalPlayer
+
+            local HITBOX_SIZE = Vector3.new(6, 6, 6)
+
+            local function setupCharacter(player, character)
+                -- ข้ามตัวละครของคนที่รันสคริปต์
+                if player == LocalPlayer then
+                    return
+                end
+
+                local root = character:WaitForChild("HumanoidRootPart", 10)
+                if not root or player == LocalPlayer then
+                    return
+                end
+
+                if root:GetAttribute("OriginalSizeX") == nil then
+                    root:SetAttribute("OriginalSizeX", root.Size.X)
+                    root:SetAttribute("OriginalSizeY", root.Size.Y)
+                    root:SetAttribute("OriginalSizeZ", root.Size.Z)
+                end
+
+                root.Size = HITBOX_SIZE
+                root.Transparency = 0.5
+                root.CanCollide = false
+            end
+
+            local function setupPlayer(player)
+                if player == LocalPlayer then
+                    return
+                end
+
+                player.CharacterAdded:Connect(function(character)
+                    setupCharacter(player, character)
+                end)
+
+                if player.Character then
+                    task.spawn(setupCharacter, player, player.Character)
+                end
+            end
+
+            Players.PlayerAdded:Connect(setupPlayer)
+
+            for _, player in ipairs(Players:GetPlayers()) do
+                setupPlayer(player)
+            end
+        end
+
+        local function setHitboxEnabled(on)
+            hitboxEnabled = on
+            if on then
+                startHitboxScript()
+            end
+            TweenService:Create(hitboxSwitch, TweenInfo.new(0.16), {
+                BackgroundColor3 = on and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
+            }):Play()
+            TweenService:Create(hitboxKnob, TweenInfo.new(0.16), {
+                Position = on and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
+                BackgroundColor3 = on and COLORS.White or COLORS.LightPurple
+            }):Play()
+            hitboxSwitchStroke.Color = on and COLORS.LightPurple or COLORS.NeonPurple
+            hitboxRowStroke.Color = on and COLORS.NeonPurple or COLORS.Purple
+            hitboxLabel.TextColor3 = on and COLORS.White or COLORS.LightPurple
+        end
+
+        hitboxSwitch.Activated:Connect(function()
+            setHitboxEnabled(not hitboxEnabled)
+        end)
+        hitboxLabel.Activated:Connect(function()
+            local now = os.clock()
+            if now - lastHitboxTap <= 0.35 then
+                -- Double-tap toggles the same control, matching the other rows.
+                setHitboxEnabled(not hitboxEnabled)
+                lastHitboxTap = 0
+            else
+                lastHitboxTap = now
+            end
+        end)
+    end
+end
+
 -- BETA panel password gate
 local betaUnlocked = false
-local betaPassword = "airport"
+local betaPassword = "1067"
 local betaOverlay = Instance.new("Frame")
 betaOverlay.Name = "BETAPasswordOverlay"
 betaOverlay.Size = UDim2.fromScale(1, 1)
@@ -1882,6 +2025,7 @@ do
         local boxEnabled = false
         local boxSizePercent = 100
         local boxAdornments = {}
+        local boxOutlines = {}
         local lastBoxRowTap = 0
 
         local boxRow = Instance.new("Frame")
@@ -2025,6 +2169,11 @@ do
                 adornment:Destroy()
                 boxAdornments[character] = nil
             end
+            local outline = boxOutlines[character]
+            if outline then
+                outline:Destroy()
+                boxOutlines[character] = nil
+            end
         end
 
         local function updateBoxVisual(otherPlayer)
@@ -2050,13 +2199,29 @@ do
                 adornment.Adornee = root
                 adornment.AlwaysOnTop = true
                 adornment.ZIndex = 10
-                adornment.Color3 = COLORS.NeonPurple
-                adornment.Transparency = 0.55
+                adornment.Color3 = Color3.fromRGB(145, 55, 255)
+                adornment.Transparency = 0.48
                 adornment.Parent = root
                 boxAdornments[character] = adornment
+
+                local outline = Instance.new("SelectionBox")
+                outline.Name = "ZenClientESPBoxBlackOutline"
+                outline.Adornee = root
+                outline.Color3 = Color3.fromRGB(0, 0, 0)
+                outline.LineThickness = 0.045
+                outline.SurfaceTransparency = 1
+                outline.Transparency = 0
+                outline.Parent = root
+                boxOutlines[character] = outline
             end
 
-            adornment.Size = Vector3.new(6, 6, 6) * (boxSizePercent / 100)
+            local visualSize = Vector3.new(6, 6, 6) * (boxSizePercent / 100)
+            adornment.Size = visualSize
+            local outline = boxOutlines[character]
+            if outline then
+                outline.Adornee = root
+                outline.Visible = true
+            end
         end
 
         local function refreshBoxVisuals()
@@ -2178,6 +2343,10 @@ do
             for character, adornment in pairs(boxAdornments) do
                 if adornment then adornment:Destroy() end
                 boxAdornments[character] = nil
+            end
+            for character, outline in pairs(boxOutlines) do
+                if outline then outline:Destroy() end
+                boxOutlines[character] = nil
             end
         end)
     end
