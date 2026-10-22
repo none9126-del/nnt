@@ -1468,20 +1468,21 @@ setMenuOpen(not menuOpen)
 end)
 
 --==================================================
--- ZenClient BETA v14 - Combat Hitbox toggle
--- The supplied hitbox snippet is kept verbatim inside startHitboxScript().
+-- ZenClient BETA v14 - Combat Hitbox (visual-only)
+-- Visual adornments only; never changes character parts or hit detection.
 --==================================================
 do
     local combatPanel = panels and panels[1]
     if combatPanel then
         local hitboxEnabled = false
+        local hitboxSizePercent = 0
+        local hitboxVisuals = {}
         local lastHitboxTap = 0
-        local hitboxConnections = {}
 
         local hitboxRow = Instance.new("Frame")
         hitboxRow.Name = "HitboxRow"
         hitboxRow.AnchorPoint = Vector2.new(0.5, 0)
-        hitboxRow.Position = UDim2.new(0.5, 0, 0, 121)
+        hitboxRow.Position = UDim2.new(0.5, 0, 0, 85)
         hitboxRow.Size = UDim2.new(1, -12, 0, 30)
         hitboxRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
         hitboxRow.BorderSizePixel = 0
@@ -1517,6 +1518,7 @@ do
         hitboxSwitch.Parent = hitboxRow
         addCorner(hitboxSwitch, 7)
         local hitboxSwitchStroke = addStroke(hitboxSwitch, COLORS.NeonPurple, 1)
+
         local hitboxKnob = Instance.new("Frame")
         hitboxKnob.Name = "SwitchKnob"
         hitboxKnob.AnchorPoint = Vector2.new(0, 0.5)
@@ -1528,60 +1530,192 @@ do
         hitboxKnob.Parent = hitboxSwitch
         addCorner(hitboxKnob, 5)
 
-        local function startHitboxScript()
-            local Players = game:GetService("Players")
-            local LocalPlayer = Players.LocalPlayer
+        local hitboxOverlay = Instance.new("Frame")
+        hitboxOverlay.Name = "HitboxSizeOverlay"
+        hitboxOverlay.Size = UDim2.fromScale(1, 1)
+        hitboxOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        hitboxOverlay.BackgroundTransparency = 0.35
+        hitboxOverlay.BorderSizePixel = 0
+        hitboxOverlay.Visible = false
+        hitboxOverlay.ZIndex = 60
+        hitboxOverlay.Parent = gui
 
-            local HITBOX_SIZE = Vector3.new(6, 6, 6)
+        local hitboxCard = Instance.new("Frame")
+        hitboxCard.Name = "HitboxSizeCard"
+        hitboxCard.AnchorPoint = Vector2.new(0.5, 0.5)
+        hitboxCard.Position = UDim2.fromScale(0.5, 0.5)
+        hitboxCard.Size = UDim2.new(0.82, 0, 0, 190)
+        hitboxCard.BackgroundColor3 = COLORS.Background
+        hitboxCard.BorderSizePixel = 0
+        hitboxCard.ZIndex = 61
+        hitboxCard.Parent = hitboxOverlay
+        addCorner(hitboxCard, 12)
+        addStroke(hitboxCard, COLORS.NeonPurple, 1.5)
 
-            local function setupCharacter(player, character)
-                -- ข้ามตัวละครของคนที่รันสคริปต์
-                if player == LocalPlayer then
-                    return
-                end
+        local hitboxConstraint = Instance.new("UISizeConstraint")
+        hitboxConstraint.MaxSize = Vector2.new(360, 190)
+        hitboxConstraint.MinSize = Vector2.new(240, 190)
+        hitboxConstraint.Parent = hitboxCard
 
-                local root = character:WaitForChild("HumanoidRootPart", 10)
-                if not root or player == LocalPlayer then
-                    return
-                end
+        local hitboxTitle = Instance.new("TextLabel")
+        hitboxTitle.Name = "SettingsTitle"
+        hitboxTitle.BackgroundTransparency = 1
+        hitboxTitle.Position = UDim2.fromOffset(14, 12)
+        hitboxTitle.Size = UDim2.new(1, -28, 0, 26)
+        hitboxTitle.Text = "Hitbox Size (Visual)"
+        hitboxTitle.TextColor3 = COLORS.White
+        hitboxTitle.Font = Enum.Font.GothamBold
+        hitboxTitle.TextSize = 17
+        hitboxTitle.ZIndex = 62
+        hitboxTitle.Parent = hitboxCard
 
-                if root:GetAttribute("OriginalSizeX") == nil then
-                    root:SetAttribute("OriginalSizeX", root.Size.X)
-                    root:SetAttribute("OriginalSizeY", root.Size.Y)
-                    root:SetAttribute("OriginalSizeZ", root.Size.Z)
-                end
+        local hitboxValue = Instance.new("TextLabel")
+        hitboxValue.Name = "HitboxSizeValue"
+        hitboxValue.BackgroundTransparency = 1
+        hitboxValue.Position = UDim2.fromOffset(14, 48)
+        hitboxValue.Size = UDim2.new(1, -28, 0, 24)
+        hitboxValue.Text = "Size: 0%"
+        hitboxValue.TextColor3 = COLORS.LightPurple
+        hitboxValue.Font = Enum.Font.GothamSemibold
+        hitboxValue.TextSize = 14
+        hitboxValue.TextXAlignment = Enum.TextXAlignment.Left
+        hitboxValue.ZIndex = 62
+        hitboxValue.Parent = hitboxCard
 
-                root.Size = HITBOX_SIZE
-                root.Transparency = 0.5
-                root.CanCollide = false
+        local hitboxSlider = Instance.new("TextButton")
+        hitboxSlider.Name = "HitboxSizeSlider"
+        hitboxSlider.Position = UDim2.new(0, 16, 0, 83)
+        hitboxSlider.Size = UDim2.new(1, -32, 0, 12)
+        hitboxSlider.BackgroundColor3 = Color3.fromRGB(48, 31, 72)
+        hitboxSlider.BorderSizePixel = 0
+        hitboxSlider.Text = ""
+        hitboxSlider.AutoButtonColor = false
+        hitboxSlider.ZIndex = 62
+        hitboxSlider.Parent = hitboxCard
+        addCorner(hitboxSlider, 6)
+
+        local hitboxFill = Instance.new("Frame")
+        hitboxFill.Name = "SliderFill"
+        hitboxFill.Size = UDim2.new(0, 0, 1, 0)
+        hitboxFill.BackgroundColor3 = COLORS.NeonPurple
+        hitboxFill.BorderSizePixel = 0
+        hitboxFill.ZIndex = 63
+        hitboxFill.Parent = hitboxSlider
+        addCorner(hitboxFill, 6)
+
+        local hitboxSliderKnob = Instance.new("Frame")
+        hitboxSliderKnob.Name = "SliderKnob"
+        hitboxSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+        hitboxSliderKnob.Position = UDim2.new(0, 0, 0.5, 0)
+        hitboxSliderKnob.Size = UDim2.fromOffset(18, 18)
+        hitboxSliderKnob.BackgroundColor3 = COLORS.White
+        hitboxSliderKnob.BorderSizePixel = 0
+        hitboxSliderKnob.ZIndex = 64
+        hitboxSliderKnob.Parent = hitboxSlider
+        addCorner(hitboxSliderKnob, 9)
+
+        local function clearHitboxVisual(character)
+            local adornment = hitboxVisuals[character]
+            if adornment then adornment:Destroy() end
+            hitboxVisuals[character] = nil
+        end
+
+        local function updateHitboxVisual(otherPlayer)
+            local character = otherPlayer and otherPlayer.Character
+            if not character then return end
+            if not hitboxEnabled or otherPlayer == player then
+                clearHitboxVisual(character)
+                return
             end
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local root = character:FindFirstChild("HumanoidRootPart")
+            if not humanoid or humanoid.Health <= 0 or not root or not root:IsA("BasePart") then
+                clearHitboxVisual(character)
+                return
+            end
+            local adornment = hitboxVisuals[character]
+            if not adornment or not adornment.Parent then
+                adornment = Instance.new("BoxHandleAdornment")
+                adornment.Name = "ZenClientHitboxVisual"
+                adornment.Adornee = root
+                adornment.AlwaysOnTop = true
+                adornment.ZIndex = 10
+                adornment.Color3 = Color3.fromRGB(190, 80, 255)
+                adornment.Transparency = 0.42
+                adornment.Parent = root
+                hitboxVisuals[character] = adornment
+            end
+            local scale = hitboxSizePercent / 100
+            local side = 0.5 + 5.5 * scale
+            adornment.Size = Vector3.new(side, side, side)
+            adornment.Visible = hitboxEnabled
+        end
 
-            local function setupPlayer(player)
-                if player == LocalPlayer then
-                    return
-                end
-
-                player.CharacterAdded:Connect(function(character)
-                    setupCharacter(player, character)
-                end)
-
-                if player.Character then
-                    task.spawn(setupCharacter, player, player.Character)
+        local function refreshHitboxVisuals()
+            for character in pairs(hitboxVisuals) do
+                if not hitboxEnabled or not character.Parent then
+                    clearHitboxVisual(character)
                 end
             end
-
-            Players.PlayerAdded:Connect(setupPlayer)
-
-            for _, player in ipairs(Players:GetPlayers()) do
-                setupPlayer(player)
+            if hitboxEnabled then
+                for _, otherPlayer in ipairs(Players:GetPlayers()) do
+                    if otherPlayer ~= player then updateHitboxVisual(otherPlayer) end
+                end
             end
         end
 
+        local function setHitboxSizeFromX(x)
+            local width = hitboxSlider.AbsoluteSize.X
+            if width <= 0 then return end
+            local alpha = math.clamp((x - hitboxSlider.AbsolutePosition.X) / width, 0, 1)
+            hitboxSizePercent = math.floor(alpha * 100 + 0.5)
+            hitboxValue.Text = "Size: " .. hitboxSizePercent .. "%"
+            hitboxFill.Size = UDim2.new(alpha, 0, 1, 0)
+            hitboxSliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
+            refreshHitboxVisuals()
+        end
+
+        local hitboxDragging = false
+        hitboxSlider.Activated:Connect(function()
+            setHitboxSizeFromX(UserInputService:GetMouseLocation().X)
+        end)
+        hitboxSlider.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                hitboxDragging = true
+                setHitboxSizeFromX(input.Position.X)
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if hitboxDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                setHitboxSizeFromX(input.Position.X)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                hitboxDragging = false
+            end
+        end)
+
+        local hitboxConfirm = Instance.new("TextButton")
+        hitboxConfirm.Name = "ConfirmHitboxSizeButton"
+        hitboxConfirm.AnchorPoint = Vector2.new(0.5, 1)
+        hitboxConfirm.Position = UDim2.new(0.5, 0, 1, -12)
+        hitboxConfirm.Size = UDim2.new(1, -32, 0, 34)
+        hitboxConfirm.BackgroundColor3 = COLORS.Purple
+        hitboxConfirm.BorderSizePixel = 0
+        hitboxConfirm.Text = "OK"
+        hitboxConfirm.TextColor3 = COLORS.White
+        hitboxConfirm.Font = Enum.Font.GothamBold
+        hitboxConfirm.TextSize = 14
+        hitboxConfirm.ZIndex = 62
+        hitboxConfirm.Parent = hitboxCard
+        addCorner(hitboxConfirm, 8)
+        addStroke(hitboxConfirm, COLORS.NeonPurple, 1)
+        hitboxConfirm.Activated:Connect(function() hitboxOverlay.Visible = false end)
+
         local function setHitboxEnabled(on)
             hitboxEnabled = on
-            if on then
-                startHitboxScript()
-            end
+            refreshHitboxVisuals()
             TweenService:Create(hitboxSwitch, TweenInfo.new(0.16), {
                 BackgroundColor3 = on and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
             }):Play()
@@ -1594,18 +1728,32 @@ do
             hitboxLabel.TextColor3 = on and COLORS.White or COLORS.LightPurple
         end
 
-        hitboxSwitch.Activated:Connect(function()
-            setHitboxEnabled(not hitboxEnabled)
-        end)
+        hitboxSwitch.Activated:Connect(function() setHitboxEnabled(not hitboxEnabled) end)
         hitboxLabel.Activated:Connect(function()
             local now = os.clock()
             if now - lastHitboxTap <= 0.35 then
-                -- Double-tap toggles the same control, matching the other rows.
-                setHitboxEnabled(not hitboxEnabled)
+                hitboxOverlay.Visible = true
                 lastHitboxTap = 0
             else
                 lastHitboxTap = now
             end
+        end)
+
+        local function hookHitboxPlayer(otherPlayer)
+            otherPlayer.CharacterAdded:Connect(function(character)
+                task.wait(0.25)
+                if character and character.Parent then updateHitboxVisual(otherPlayer) end
+            end)
+        end
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do
+            if otherPlayer ~= player then hookHitboxPlayer(otherPlayer) end
+        end
+        Players.PlayerAdded:Connect(hookHitboxPlayer)
+        Players.PlayerRemoving:Connect(function(otherPlayer)
+            if otherPlayer.Character then clearHitboxVisual(otherPlayer.Character) end
+        end)
+        gui.Destroying:Connect(function()
+            for character in pairs(hitboxVisuals) do clearHitboxVisual(character) end
         end)
     end
 end
@@ -2023,7 +2171,7 @@ do
     local renderPanel = panels and panels[3]
     if renderPanel then
         local boxEnabled = false
-        local boxSizePercent = 100
+        local boxSizePercent = 0
         local boxAdornments = {}
         local boxOutlines = {}
         local lastBoxRowTap = 0
@@ -2123,7 +2271,7 @@ do
         boxValue.BackgroundTransparency = 1
         boxValue.Position = UDim2.fromOffset(14, 48)
         boxValue.Size = UDim2.new(1, -28, 0, 24)
-        boxValue.Text = "Size: " .. boxSizePercent .. "%"
+        boxValue.Text = "Size: " .. boxSizePercent .. "%" 
         boxValue.TextColor3 = COLORS.LightPurple
         boxValue.Font = Enum.Font.GothamSemibold
         boxValue.TextSize = 14
@@ -2145,7 +2293,7 @@ do
 
         local boxSliderFill = Instance.new("Frame")
         boxSliderFill.Name = "SliderFill"
-        boxSliderFill.Size = UDim2.new((boxSizePercent - 100) / 200, 0, 1, 0)
+        boxSliderFill.Size = UDim2.new(boxSizePercent / 100, 0, 1, 0)
         boxSliderFill.BackgroundColor3 = COLORS.NeonPurple
         boxSliderFill.BorderSizePixel = 0
         boxSliderFill.ZIndex = 63
@@ -2155,7 +2303,7 @@ do
         local boxSliderKnob = Instance.new("Frame")
         boxSliderKnob.Name = "SliderKnob"
         boxSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-        boxSliderKnob.Position = UDim2.new((boxSizePercent - 100) / 200, 0, 0.5, 0)
+        boxSliderKnob.Position = UDim2.new(boxSizePercent / 100, 0, 0.5, 0)
         boxSliderKnob.Size = UDim2.fromOffset(18, 18)
         boxSliderKnob.BackgroundColor3 = COLORS.White
         boxSliderKnob.BorderSizePixel = 0
@@ -2215,7 +2363,8 @@ do
                 boxOutlines[character] = outline
             end
 
-            local visualSize = Vector3.new(6, 6, 6) * (boxSizePercent / 100)
+            local side = 0.5 + 5.5 * (boxSizePercent / 100)
+            local visualSize = Vector3.new(side, side, side)
             adornment.Size = visualSize
             local outline = boxOutlines[character]
             if outline then
@@ -2226,9 +2375,11 @@ do
 
         local function refreshBoxVisuals()
             if not boxEnabled then
-                for character, adornment in pairs(boxAdornments) do
-                    if adornment then adornment:Destroy() end
-                    boxAdornments[character] = nil
+                for character in pairs(boxAdornments) do
+                    clearBoxVisual(character)
+                end
+                for character in pairs(boxOutlines) do
+                    clearBoxVisual(character)
                 end
                 return
             end
@@ -2241,8 +2392,8 @@ do
             local trackWidth = boxSlider.AbsoluteSize.X
             if trackWidth <= 0 then return end
             local alpha = math.clamp((x - boxSlider.AbsolutePosition.X) / trackWidth, 0, 1)
-            boxSizePercent = math.floor(100 + alpha * 200 + 0.5)
-            local normalized = (boxSizePercent - 100) / 200
+            boxSizePercent = math.floor(alpha * 100 + 0.5)
+            local normalized = boxSizePercent / 100
             boxValue.Text = "Size: " .. boxSizePercent .. "%"
             boxSliderFill.Size = UDim2.new(normalized, 0, 1, 0)
             boxSliderKnob.Position = UDim2.new(normalized, 0, 0.5, 0)
