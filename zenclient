@@ -2177,17 +2177,57 @@ do
                 boxOutlines[character] = outline
             end
 
-            -- Extend only the bottom of the visual ESP box slightly below the feet.
-            -- Keep the top edge in the same place; this does not change the real hitbox.
-            local boundsCFrame, boundsSize = character:GetBoundingBox()
-            local extraBelowFeet = 0.30
-            local baseHeight = math.max(4.2, boundsSize.Y)
-            local targetSize = Vector3.new(
-                math.max(1.45, boundsSize.X),
-                baseHeight + extraBelowFeet,
-                math.max(1.15, boundsSize.Z)
-            )
-            local targetCFrame = boundsCFrame * CFrame.new(0, -extraBelowFeet / 2, 0)
+            -- Match the ESP box to the avatar body bounds, excluding accessories/tools
+            -- that can make the box look larger than the red body box. Keep a tiny
+            -- extension below the feet. This only changes the visual ESP box.
+            local minBound = Vector3.new(math.huge, math.huge, math.huge)
+            local maxBound = Vector3.new(-math.huge, -math.huge, -math.huge)
+            local rootFrame = root.CFrame
+            local foundBodyPart = false
+            for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart")
+                    and not part:FindFirstAncestorOfClass("Accessory")
+                    and not part:FindFirstAncestorOfClass("Tool") then
+                    for _, x in ipairs({-1, 1}) do
+                        for _, y in ipairs({-1, 1}) do
+                            for _, z in ipairs({-1, 1}) do
+                                local corner = part.CFrame:PointToWorldSpace(Vector3.new(
+                                    part.Size.X * 0.5 * x,
+                                    part.Size.Y * 0.5 * y,
+                                    part.Size.Z * 0.5 * z
+                                ))
+                                local localCorner = rootFrame:PointToObjectSpace(corner)
+                                minBound = Vector3.new(
+                                    math.min(minBound.X, localCorner.X),
+                                    math.min(minBound.Y, localCorner.Y),
+                                    math.min(minBound.Z, localCorner.Z)
+                                )
+                                maxBound = Vector3.new(
+                                    math.max(maxBound.X, localCorner.X),
+                                    math.max(maxBound.Y, localCorner.Y),
+                                    math.max(maxBound.Z, localCorner.Z)
+                                )
+                                foundBodyPart = true
+                            end
+                        end
+                    end
+                end
+            end
+            local targetSize
+            local targetCFrame
+            if foundBodyPart then
+                local extraBelowFeet = 0.30
+                local centerLocal = (minBound + maxBound) * 0.5
+                local sizeLocal = maxBound - minBound
+                sizeLocal = Vector3.new(sizeLocal.X, sizeLocal.Y + extraBelowFeet, sizeLocal.Z)
+                centerLocal = Vector3.new(centerLocal.X, centerLocal.Y + extraBelowFeet * 0.5, centerLocal.Z)
+                targetSize = Vector3.new(math.max(1.2, sizeLocal.X), math.max(3.5, sizeLocal.Y), math.max(0.8, sizeLocal.Z))
+                targetCFrame = rootFrame * CFrame.new(centerLocal)
+            else
+                local boundsCFrame, boundsSize = character:GetBoundingBox()
+                targetSize = Vector3.new(boundsSize.X, boundsSize.Y + 0.30, boundsSize.Z)
+                targetCFrame = boundsCFrame * CFrame.new(0, 0.15, 0)
+            end
             proxy.Size = targetSize
             if proxy:GetAttribute("ZenClientBoxInitialized") then
                 proxy.CFrame = proxy.CFrame:Lerp(targetCFrame, 0.10)
