@@ -1481,7 +1481,7 @@ do
         local hitboxRow = Instance.new("Frame")
         hitboxRow.Name = "HitboxRow"
         hitboxRow.AnchorPoint = Vector2.new(0.5, 0)
-        hitboxRow.Position = UDim2.new(0.5, 0, 0, 121)
+        hitboxRow.Position = UDim2.new(0.5, 0, 0, 85)
         hitboxRow.Size = UDim2.new(1, -12, 0, 30)
         hitboxRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
         hitboxRow.BorderSizePixel = 0
@@ -2054,6 +2054,7 @@ do
         local boxSizePercent = 100
         local boxAdornments = {}
         local boxOutlines = {}
+        local boxProxies = {}
         local lastBoxRowTap = 0
 
         local boxRow = Instance.new("Frame")
@@ -2202,6 +2203,11 @@ do
                 outline:Destroy()
                 boxOutlines[character] = nil
             end
+            local proxy = boxProxies[character]
+            if proxy then
+                proxy:Destroy()
+                boxProxies[character] = nil
+            end
         end
 
         local function updateBoxVisual(otherPlayer)
@@ -2219,35 +2225,58 @@ do
                 return
             end
 
-            local adornment = boxAdornments[character]
-            if not adornment or not adornment.Parent then
+            local proxy = boxProxies[character]
+            if not proxy or not proxy.Parent then
                 clearBoxVisual(character)
-                adornment = Instance.new("BoxHandleAdornment")
+
+                -- Invisible client-side proxy sized to the character's actual bounding box.
+                proxy = Instance.new("Part")
+                proxy.Name = "ZenClientESPBoxBounds"
+                proxy.Anchored = true
+                proxy.CanCollide = false
+                proxy.CanTouch = false
+                proxy.CanQuery = false
+                proxy.CastShadow = false
+                proxy.Transparency = 1
+                proxy.Size = Vector3.new(2, 5, 2)
+                proxy.Parent = workspace
+                boxProxies[character] = proxy
+
+                local adornment = Instance.new("BoxHandleAdornment")
                 adornment.Name = "ZenClientESPBoxVisual"
-                adornment.Adornee = root
+                adornment.Adornee = proxy
                 adornment.AlwaysOnTop = true
                 adornment.ZIndex = 10
                 adornment.Color3 = Color3.fromRGB(145, 55, 255)
                 adornment.Transparency = 0.48
-                adornment.Parent = root
+                adornment.Parent = proxy
                 boxAdornments[character] = adornment
 
                 local outline = Instance.new("SelectionBox")
                 outline.Name = "ZenClientESPBoxBlackOutline"
-                outline.Adornee = root
+                outline.Adornee = proxy
                 outline.Color3 = Color3.fromRGB(0, 0, 0)
                 outline.LineThickness = 0.045
                 outline.SurfaceTransparency = 1
                 outline.Transparency = 0
-                outline.Parent = root
+                outline.Parent = proxy
                 boxOutlines[character] = outline
             end
 
-            local visualSize = Vector3.new(6, 6, 6) * (boxSizePercent / 100)
-            adornment.Size = visualSize
+            -- Use the live character bounding box, not a fixed 6x6x6 cube.
+            -- This follows animation and replicated movement as the client receives it.
+            local boundsCFrame, boundsSize = character:GetBoundingBox()
+            local scale = boxSizePercent / 100
+            proxy.Size = boundsSize * scale
+            proxy.CFrame = boundsCFrame
+            local adornment = boxAdornments[character]
+            if adornment then
+                adornment.Adornee = proxy
+                adornment.Size = proxy.Size
+            end
             local outline = boxOutlines[character]
             if outline then
-                outline.Adornee = root
+                outline.Adornee = proxy
                 outline.Visible = true
             end
         end
@@ -2260,6 +2289,9 @@ do
                     charactersToClear[character] = true
                 end
                 for character in pairs(boxOutlines) do
+                    charactersToClear[character] = true
+                end
+                for character in pairs(boxProxies) do
                     charactersToClear[character] = true
                 end
                 for character in pairs(charactersToClear) do
