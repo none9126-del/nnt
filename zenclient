@@ -2051,9 +2051,11 @@ do
     local renderPanel = panels and panels[3]
     if renderPanel then
         local boxEnabled = false
+        local boxSizePercent = 100
         local boxAdornments = {}
         local boxOutlines = {}
         local boxProxies = {}
+        local lastBoxRowTap = 0
 
         local boxRow = Instance.new("Frame")
         boxRow.Name = "ESPBoxRow"
@@ -2105,6 +2107,90 @@ do
         boxKnob.ZIndex = 16
         boxKnob.Parent = boxSwitch
         addCorner(boxKnob, 5)
+
+        local boxOverlay = Instance.new("Frame")
+        boxOverlay.Name = "ESPBoxSizeOverlay"
+        boxOverlay.Size = UDim2.fromScale(1, 1)
+        boxOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        boxOverlay.BackgroundTransparency = 0.35
+        boxOverlay.BorderSizePixel = 0
+        boxOverlay.Visible = false
+        boxOverlay.ZIndex = 60
+        boxOverlay.Parent = gui
+
+        local boxCard = Instance.new("Frame")
+        boxCard.Name = "ESPBoxSizeCard"
+        boxCard.AnchorPoint = Vector2.new(0.5, 0.5)
+        boxCard.Position = UDim2.fromScale(0.5, 0.5)
+        boxCard.Size = UDim2.new(0.82, 0, 0, 190)
+        boxCard.BackgroundColor3 = COLORS.Background
+        boxCard.BorderSizePixel = 0
+        boxCard.ZIndex = 61
+        boxCard.Parent = boxOverlay
+        addCorner(boxCard, 12)
+        addStroke(boxCard, COLORS.NeonPurple, 1.5)
+
+        local boxCardConstraint = Instance.new("UISizeConstraint")
+        boxCardConstraint.MaxSize = Vector2.new(360, 190)
+        boxCardConstraint.MinSize = Vector2.new(240, 190)
+        boxCardConstraint.Parent = boxCard
+
+        local boxTitle = Instance.new("TextLabel")
+        boxTitle.Name = "SettingsTitle"
+        boxTitle.BackgroundTransparency = 1
+        boxTitle.Position = UDim2.fromOffset(14, 12)
+        boxTitle.Size = UDim2.new(1, -28, 0, 26)
+        boxTitle.Text = "ESP Box Size (50–150%)"
+        boxTitle.TextColor3 = COLORS.White
+        boxTitle.Font = Enum.Font.GothamBold
+        boxTitle.TextSize = 17
+        boxTitle.ZIndex = 62
+        boxTitle.Parent = boxCard
+
+        local boxValue = Instance.new("TextLabel")
+        boxValue.Name = "ESPBoxSizeValue"
+        boxValue.BackgroundTransparency = 1
+        boxValue.Position = UDim2.fromOffset(14, 48)
+        boxValue.Size = UDim2.new(1, -28, 0, 24)
+        boxValue.Text = "Size: " .. boxSizePercent .. "%"
+        boxValue.TextColor3 = COLORS.LightPurple
+        boxValue.Font = Enum.Font.GothamSemibold
+        boxValue.TextSize = 14
+        boxValue.TextXAlignment = Enum.TextXAlignment.Left
+        boxValue.ZIndex = 62
+        boxValue.Parent = boxCard
+
+        local boxSlider = Instance.new("TextButton")
+        boxSlider.Name = "ESPBoxSizeSlider"
+        boxSlider.Position = UDim2.new(0, 16, 0, 83)
+        boxSlider.Size = UDim2.new(1, -32, 0, 12)
+        boxSlider.BackgroundColor3 = Color3.fromRGB(48, 31, 72)
+        boxSlider.BorderSizePixel = 0
+        boxSlider.Text = ""
+        boxSlider.AutoButtonColor = false
+        boxSlider.ZIndex = 62
+        boxSlider.Parent = boxCard
+        addCorner(boxSlider, 6)
+
+        local boxSliderFill = Instance.new("Frame")
+        boxSliderFill.Name = "SliderFill"
+        boxSliderFill.Size = UDim2.new((boxSizePercent - 50) / 100, 0, 1, 0)
+        boxSliderFill.BackgroundColor3 = COLORS.NeonPurple
+        boxSliderFill.BorderSizePixel = 0
+        boxSliderFill.ZIndex = 63
+        boxSliderFill.Parent = boxSlider
+        addCorner(boxSliderFill, 6)
+
+        local boxSliderKnob = Instance.new("Frame")
+        boxSliderKnob.Name = "SliderKnob"
+        boxSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+        boxSliderKnob.Position = UDim2.new((boxSizePercent - 50) / 100, 0, 0.5, 0)
+        boxSliderKnob.Size = UDim2.fromOffset(18, 18)
+        boxSliderKnob.BackgroundColor3 = COLORS.White
+        boxSliderKnob.BorderSizePixel = 0
+        boxSliderKnob.ZIndex = 64
+        boxSliderKnob.Parent = boxSlider
+        addCorner(boxSliderKnob, 9)
 
         local function clearBoxVisual(character)
             local adornment = boxAdornments[character]
@@ -2177,72 +2263,35 @@ do
                 boxOutlines[character] = outline
             end
 
-            -- Match the ESP box to the avatar body bounds, excluding accessories/tools
-            -- that can make the box look larger than the red body box. Keep a tiny
-            -- extension below the feet. This only changes the visual ESP box.
-            local minBound = Vector3.new(math.huge, math.huge, math.huge)
-            local maxBound = Vector3.new(-math.huge, -math.huge, -math.huge)
-            local rootFrame = root.CFrame
-            local foundBodyPart = false
-            for _, part in ipairs(character:GetDescendants()) do
-                if part:IsA("BasePart")
-                    and not part:FindFirstAncestorOfClass("Accessory")
-                    and not part:FindFirstAncestorOfClass("Tool") then
-                    for _, x in ipairs({-1, 1}) do
-                        for _, y in ipairs({-1, 1}) do
-                            for _, z in ipairs({-1, 1}) do
-                                local corner = part.CFrame:PointToWorldSpace(Vector3.new(
-                                    part.Size.X * 0.5 * x,
-                                    part.Size.Y * 0.5 * y,
-                                    part.Size.Z * 0.5 * z
-                                ))
-                                local localCorner = rootFrame:PointToObjectSpace(corner)
-                                minBound = Vector3.new(
-                                    math.min(minBound.X, localCorner.X),
-                                    math.min(minBound.Y, localCorner.Y),
-                                    math.min(minBound.Z, localCorner.Z)
-                                )
-                                maxBound = Vector3.new(
-                                    math.max(maxBound.X, localCorner.X),
-                                    math.max(maxBound.Y, localCorner.Y),
-                                    math.max(maxBound.Z, localCorner.Z)
-                                )
-                                foundBodyPart = true
-                            end
-                        end
-                    end
-                end
+            -- Use a compact upright player-shaped box based on the character root,
+            -- avoiding oversized bounds caused by large accessories or held tools.
+            -- Position smoothing gives the visual a slight follow delay; this is visual-only
+            -- and does not change the game's real/server hitbox.
+            local scale = boxSizePercent / 100
+            local height = math.max(4.2, humanoid.HipHeight * 2 + root.Size.Y + 1.2)
+            local width = math.max(1.45, root.Size.X * 1.8)
+            local depth = math.max(1.15, root.Size.Z * 1.5)
+            local targetSize = Vector3.new(width * scale, height * scale, depth * scale)
+            local targetCFrame = root.CFrame * CFrame.new(0, (height - root.Size.Y) * 0.5, 0)
+            -- Avoid writing unchanged properties every update; this reduces rendering work.
+            if (proxy.Size - targetSize).Magnitude > 0.001 then
+                proxy.Size = targetSize
             end
-            local targetSize
-            local targetCFrame
-            if foundBodyPart then
-                local extraBelowFeet = 0.30
-                local centerLocal = (minBound + maxBound) * 0.5
-                local sizeLocal = maxBound - minBound
-                sizeLocal = Vector3.new(sizeLocal.X, sizeLocal.Y + extraBelowFeet, sizeLocal.Z)
-                centerLocal = Vector3.new(centerLocal.X, centerLocal.Y + extraBelowFeet * 0.5, centerLocal.Z)
-                targetSize = Vector3.new(math.max(1.2, sizeLocal.X), math.max(3.5, sizeLocal.Y), math.max(0.8, sizeLocal.Z))
-                targetCFrame = rootFrame * CFrame.new(centerLocal)
-            else
-                local boundsCFrame, boundsSize = character:GetBoundingBox()
-                targetSize = Vector3.new(boundsSize.X, boundsSize.Y + 0.30, boundsSize.Z)
-                targetCFrame = boundsCFrame * CFrame.new(0, 0.15, 0)
-            end
-            proxy.Size = targetSize
             if proxy:GetAttribute("ZenClientBoxInitialized") then
-                proxy.CFrame = proxy.CFrame:Lerp(targetCFrame, 0.10)
+                -- Frame-rate independent smoothing while keeping the visual responsive.
+                local dt = 1 / 20
+                local alpha = 1 - math.exp(-12 * dt)
+                proxy.CFrame = proxy.CFrame:Lerp(targetCFrame, alpha)
             else
                 proxy.CFrame = targetCFrame
                 proxy:SetAttribute("ZenClientBoxInitialized", true)
             end
             local adornment = boxAdornments[character]
-            if adornment then
-                adornment.Adornee = proxy
+            if adornment and adornment.Size ~= proxy.Size then
                 adornment.Size = proxy.Size
             end
             local outline = boxOutlines[character]
-            if outline then
-                outline.Adornee = proxy
+            if outline and not outline.Visible then
                 outline.Visible = true
             end
         end
@@ -2270,7 +2319,74 @@ do
             end
         end
 
-        -- ESP Box size adjustment UI removed; the box uses fixed character bounds.
+        local function setBoxSizeFromX(x)
+            local trackWidth = boxSlider.AbsoluteSize.X
+            if trackWidth <= 0 then return end
+            local alpha = math.clamp((x - boxSlider.AbsolutePosition.X) / trackWidth, 0, 1)
+            boxSizePercent = math.floor(50 + alpha * 100 + 0.5)
+            local normalized = (boxSizePercent - 50) / 100
+            boxValue.Text = "Size: " .. boxSizePercent .. "%"
+            boxSliderFill.Size = UDim2.new(normalized, 0, 1, 0)
+            boxSliderKnob.Position = UDim2.new(normalized, 0, 0.5, 0)
+            refreshBoxVisuals()
+        end
+
+        local boxDraggingSlider = false
+        boxSlider.Activated:Connect(function()
+            setBoxSizeFromX(UserInputService:GetMouseLocation().X)
+        end)
+        boxSlider.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                boxDraggingSlider = true
+                setBoxSizeFromX(input.Position.X)
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if boxDraggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                setBoxSizeFromX(input.Position.X)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                boxDraggingSlider = false
+            end
+        end)
+
+        local boxOkButton = Instance.new("TextButton")
+        boxOkButton.Name = "ConfirmESPBoxSizeButton"
+        boxOkButton.AnchorPoint = Vector2.new(0.5, 1)
+        boxOkButton.Position = UDim2.new(0.5, 0, 1, -12)
+        boxOkButton.Size = UDim2.new(1, -32, 0, 34)
+        boxOkButton.BackgroundColor3 = COLORS.Purple
+        boxOkButton.BorderSizePixel = 0
+        boxOkButton.Text = "OK"
+        boxOkButton.TextColor3 = COLORS.White
+        boxOkButton.Font = Enum.Font.GothamBold
+        boxOkButton.TextSize = 14
+        boxOkButton.ZIndex = 62
+        boxOkButton.Parent = boxCard
+        addCorner(boxOkButton, 8)
+        addStroke(boxOkButton, COLORS.NeonPurple, 1)
+        boxOkButton.Activated:Connect(function()
+            boxOverlay.Visible = false
+        end)
+
+        local function openBoxSettings()
+            boxOverlay.Visible = true
+        end
+        local function handleBoxLabelInput(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then
+                return
+            end
+            local now = os.clock()
+            if now - lastBoxRowTap <= 0.35 then
+                openBoxSettings()
+                lastBoxRowTap = 0
+            else
+                lastBoxRowTap = now
+            end
+        end
+        boxLabel.InputBegan:Connect(handleBoxLabelInput)
 
         local function setBoxEnabled(on)
             boxEnabled = on
@@ -2291,9 +2407,17 @@ do
             setBoxEnabled(not boxEnabled)
         end)
 
-        -- Recompute the bounds continuously so the visual follows replicated movement.
-        local boxRenderConnection = RunService.RenderStepped:Connect(function()
-            if boxEnabled then
+        -- Update ESP boxes at 20 Hz instead of every rendered frame.
+        -- This avoids repeating player scans and bounding calculations 60+ times per second.
+        local boxUpdateAccumulator = 0
+        local boxRenderConnection = RunService.Heartbeat:Connect(function(dt)
+            if not boxEnabled then
+                boxUpdateAccumulator = 0
+                return
+            end
+            boxUpdateAccumulator += dt
+            if boxUpdateAccumulator >= 0.05 then
+                boxUpdateAccumulator %= 0.05
                 refreshBoxVisuals()
             end
         end)
