@@ -2360,6 +2360,13 @@ do
             setBoxEnabled(not boxEnabled)
         end)
 
+        -- Recompute the bounds continuously so the visual follows replicated movement.
+        local boxRenderConnection = RunService.RenderStepped:Connect(function()
+            if boxEnabled then
+                refreshBoxVisuals()
+            end
+        end)
+
         local function hookBoxPlayer(otherPlayer)
             otherPlayer.CharacterAdded:Connect(function(character)
                 task.wait(0.25)
@@ -2375,6 +2382,10 @@ do
         end)
 
         gui.Destroying:Connect(function()
+            if boxRenderConnection then
+                boxRenderConnection:Disconnect()
+                boxRenderConnection = nil
+            end
             for character, adornment in pairs(boxAdornments) do
                 if adornment then adornment:Destroy() end
                 boxAdornments[character] = nil
