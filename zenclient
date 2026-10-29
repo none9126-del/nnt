@@ -2140,7 +2140,7 @@ do
         boxTitle.BackgroundTransparency = 1
         boxTitle.Position = UDim2.fromOffset(14, 12)
         boxTitle.Size = UDim2.new(1, -28, 0, 26)
-        boxTitle.Text = "ESP Box Size (Visual)"
+        boxTitle.Text = "ESP Box Size (50–150%)"
         boxTitle.TextColor3 = COLORS.White
         boxTitle.Font = Enum.Font.GothamBold
         boxTitle.TextSize = 17
@@ -2174,7 +2174,7 @@ do
 
         local boxSliderFill = Instance.new("Frame")
         boxSliderFill.Name = "SliderFill"
-        boxSliderFill.Size = UDim2.new((boxSizePercent - 100) / 200, 0, 1, 0)
+        boxSliderFill.Size = UDim2.new((boxSizePercent - 50) / 100, 0, 1, 0)
         boxSliderFill.BackgroundColor3 = COLORS.NeonPurple
         boxSliderFill.BorderSizePixel = 0
         boxSliderFill.ZIndex = 63
@@ -2184,7 +2184,7 @@ do
         local boxSliderKnob = Instance.new("Frame")
         boxSliderKnob.Name = "SliderKnob"
         boxSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-        boxSliderKnob.Position = UDim2.new((boxSizePercent - 100) / 200, 0, 0.5, 0)
+        boxSliderKnob.Position = UDim2.new((boxSizePercent - 50) / 100, 0, 0.5, 0)
         boxSliderKnob.Size = UDim2.fromOffset(18, 18)
         boxSliderKnob.BackgroundColor3 = COLORS.White
         boxSliderKnob.BorderSizePixel = 0
@@ -2263,12 +2263,23 @@ do
                 boxOutlines[character] = outline
             end
 
-            -- Use the live character bounding box, not a fixed 6x6x6 cube.
-            -- This follows animation and replicated movement as the client receives it.
-            local boundsCFrame, boundsSize = character:GetBoundingBox()
+            -- Use a compact upright player-shaped box based on the character root,
+            -- avoiding oversized bounds caused by large accessories or held tools.
+            -- Position smoothing gives the visual a slight follow delay; this is visual-only
+            -- and does not change the game's real/server hitbox.
             local scale = boxSizePercent / 100
-            proxy.Size = boundsSize * scale
-            proxy.CFrame = boundsCFrame
+            local height = math.max(4.2, humanoid.HipHeight * 2 + root.Size.Y + 1.2)
+            local width = math.max(1.45, root.Size.X * 1.8)
+            local depth = math.max(1.15, root.Size.Z * 1.5)
+            local targetSize = Vector3.new(width * scale, height * scale, depth * scale)
+            local targetCFrame = root.CFrame * CFrame.new(0, (height - root.Size.Y) * 0.5, 0)
+            proxy.Size = targetSize
+            if proxy:GetAttribute("ZenClientBoxInitialized") then
+                proxy.CFrame = proxy.CFrame:Lerp(targetCFrame, 0.28)
+            else
+                proxy.CFrame = targetCFrame
+                proxy:SetAttribute("ZenClientBoxInitialized", true)
+            end
             local adornment = boxAdornments[character]
             if adornment then
                 adornment.Adornee = proxy
@@ -2308,8 +2319,8 @@ do
             local trackWidth = boxSlider.AbsoluteSize.X
             if trackWidth <= 0 then return end
             local alpha = math.clamp((x - boxSlider.AbsolutePosition.X) / trackWidth, 0, 1)
-            boxSizePercent = math.floor(100 + alpha * 200 + 0.5)
-            local normalized = (boxSizePercent - 100) / 200
+            boxSizePercent = math.floor(50 + alpha * 100 + 0.5)
+            local normalized = (boxSizePercent - 50) / 100
             boxValue.Text = "Size: " .. boxSizePercent .. "%"
             boxSliderFill.Size = UDim2.new(normalized, 0, 1, 0)
             boxSliderKnob.Position = UDim2.new(normalized, 0, 0.5, 0)
