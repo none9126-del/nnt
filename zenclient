@@ -1528,27 +1528,53 @@ do
         hitboxKnob.Parent = hitboxSwitch
         addCorner(hitboxKnob, 5)
 
+        local hitboxOriginals = {}
+        local hitboxConnections = {}
+
+        local function disconnectHitboxConnections()
+            for _, connection in ipairs(hitboxConnections) do
+                if connection and connection.Connected then
+                    connection:Disconnect()
+                end
+            end
+            table.clear(hitboxConnections)
+        end
+
+        local function restoreHitboxes()
+            disconnectHitboxConnections()
+            for root, original in pairs(hitboxOriginals) do
+                if root and root.Parent then
+                    root.Size = original.Size
+                    root.Transparency = original.Transparency
+                    root.CanCollide = original.CanCollide
+                end
+                hitboxOriginals[root] = nil
+            end
+        end
+
         local function startHitboxScript()
             local Players = game:GetService("Players")
             local LocalPlayer = Players.LocalPlayer
-
             local HITBOX_SIZE = Vector3.new(6, 6, 6)
 
-            local function setupCharacter(player, character)
-                -- ข้ามตัวละครของคนที่รันสคริปต์
-                if player == LocalPlayer then
+            local function setupCharacter(targetPlayer, character)
+                if not hitboxEnabled or targetPlayer == LocalPlayer or not character then
                     return
                 end
 
-                local root = character:WaitForChild("HumanoidRootPart", 10)
-                if not root or player == LocalPlayer then
+                local root = character:FindFirstChild("HumanoidRootPart")
+                    or character:WaitForChild("HumanoidRootPart", 10)
+
+                if not hitboxEnabled or not root or not root:IsA("BasePart") then
                     return
                 end
 
-                if root:GetAttribute("OriginalSizeX") == nil then
-                    root:SetAttribute("OriginalSizeX", root.Size.X)
-                    root:SetAttribute("OriginalSizeY", root.Size.Y)
-                    root:SetAttribute("OriginalSizeZ", root.Size.Z)
+                if not hitboxOriginals[root] then
+                    hitboxOriginals[root] = {
+                        Size = root.Size,
+                        Transparency = root.Transparency,
+                        CanCollide = root.CanCollide,
+                    }
                 end
 
                 root.Size = HITBOX_SIZE
@@ -1556,24 +1582,24 @@ do
                 root.CanCollide = false
             end
 
-            local function setupPlayer(player)
-                if player == LocalPlayer then
+            local function setupPlayer(targetPlayer)
+                if targetPlayer == LocalPlayer then
                     return
                 end
 
-                player.CharacterAdded:Connect(function(character)
-                    setupCharacter(player, character)
-                end)
+                table.insert(hitboxConnections, targetPlayer.CharacterAdded:Connect(function(character)
+                    setupCharacter(targetPlayer, character)
+                end))
 
-                if player.Character then
-                    task.spawn(setupCharacter, player, player.Character)
+                if targetPlayer.Character then
+                    task.spawn(setupCharacter, targetPlayer, targetPlayer.Character)
                 end
             end
 
-            Players.PlayerAdded:Connect(setupPlayer)
+            table.insert(hitboxConnections, Players.PlayerAdded:Connect(setupPlayer))
 
-            for _, player in ipairs(Players:GetPlayers()) do
-                setupPlayer(player)
+            for _, targetPlayer in ipairs(Players:GetPlayers()) do
+                setupPlayer(targetPlayer)
             end
         end
 
@@ -1581,6 +1607,8 @@ do
             hitboxEnabled = on
             if on then
                 startHitboxScript()
+            else
+                restoreHitboxes()
             end
             TweenService:Create(hitboxSwitch, TweenInfo.new(0.16), {
                 BackgroundColor3 = on and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
@@ -2226,9 +2254,16 @@ do
 
         local function refreshBoxVisuals()
             if not boxEnabled then
-                for character, adornment in pairs(boxAdornments) do
-                    if adornment then adornment:Destroy() end
-                    boxAdornments[character] = nil
+                -- Clear both the purple box and its black SelectionBox outline.
+                local charactersToClear = {}
+                for character in pairs(boxAdornments) do
+                    charactersToClear[character] = true
+                end
+                for character in pairs(boxOutlines) do
+                    charactersToClear[character] = true
+                end
+                for character in pairs(charactersToClear) do
+                    clearBoxVisual(character)
                 end
                 return
             end
