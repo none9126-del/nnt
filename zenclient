@@ -2265,8 +2265,9 @@ do
 
             -- Use a compact upright player-shaped box based on the character root,
             -- avoiding oversized bounds caused by large accessories or held tools.
-            -- Position smoothing gives the visual a slight follow delay; this is visual-only
-            -- and does not change the game's real/server hitbox.
+            -- Position smoothing intentionally makes the ESP box trail behind the character.
+            -- Lower follow alpha = more visible delay; this is visual-only and does not change
+            -- the game's real/server hitbox.
             local scale = boxSizePercent / 100
             local height = math.max(4.2, humanoid.HipHeight * 2 + root.Size.Y + 1.2)
             local width = math.max(1.45, root.Size.X * 1.8)
@@ -2275,7 +2276,7 @@ do
             local targetCFrame = root.CFrame * CFrame.new(0, (height - root.Size.Y) * 0.5, 0)
             proxy.Size = targetSize
             if proxy:GetAttribute("ZenClientBoxInitialized") then
-                proxy.CFrame = proxy.CFrame:Lerp(targetCFrame, 0.28)
+                proxy.CFrame = proxy.CFrame:Lerp(targetCFrame, 0.10)
             else
                 proxy.CFrame = targetCFrame
                 proxy:SetAttribute("ZenClientBoxInitialized", true)
