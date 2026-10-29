@@ -2177,17 +2177,17 @@ do
                 boxOutlines[character] = outline
             end
 
-            -- Fixed ESP size: use the character's real model bounds, including the feet.
-            -- Add a small amount of height so the box extends slightly below the feet.
-            -- This is visual-only and does not change the game's real/server hitbox.
+            -- Extend only the bottom of the visual ESP box slightly below the feet.
+            -- Keep the top edge in the same place; this does not change the real hitbox.
             local boundsCFrame, boundsSize = character:GetBoundingBox()
-            local extraHeight = 0.30
+            local extraBelowFeet = 0.30
+            local baseHeight = math.max(4.2, boundsSize.Y)
             local targetSize = Vector3.new(
                 math.max(1.45, boundsSize.X),
-                math.max(4.2, boundsSize.Y + extraHeight),
+                baseHeight + extraBelowFeet,
                 math.max(1.15, boundsSize.Z)
             )
-            local targetCFrame = boundsCFrame
+            local targetCFrame = boundsCFrame * CFrame.new(0, -extraBelowFeet / 2, 0)
             proxy.Size = targetSize
             if proxy:GetAttribute("ZenClientBoxInitialized") then
                 proxy.CFrame = proxy.CFrame:Lerp(targetCFrame, 0.10)
