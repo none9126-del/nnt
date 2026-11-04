@@ -2452,3 +2452,245 @@ do
         end)
     end
 end
+
+--==================================================
+-- ZenClient BETA v14 - FOV (Render panel)
+-- Double-tap FOV to open the slider.
+-- Range: the camera's original FOV through 120.
+--==================================================
+do
+    local renderPanel = panels and panels[3]
+    if renderPanel then
+        local camera = workspace.CurrentCamera
+        local defaultFOV = camera and math.clamp(camera.FieldOfView, 1, 120) or 70
+        local fovValue = defaultFOV
+        local lastFOVRowTap = 0
+        local fovDraggingSlider = false
+
+        local fovRow = Instance.new("Frame")
+        fovRow.Name = "FOVRow"
+        fovRow.AnchorPoint = Vector2.new(0.5, 0)
+        fovRow.Position = UDim2.new(0.5, 0, 0, 121)
+        fovRow.Size = UDim2.new(1, -12, 0, 30)
+        fovRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
+        fovRow.BorderSizePixel = 0
+        fovRow.ZIndex = 13
+        fovRow.Parent = renderPanel
+        addCorner(fovRow, 6)
+        addStroke(fovRow, COLORS.Purple, 1)
+
+        local fovLabel = Instance.new("TextButton")
+        fovLabel.Name = "FOVLabel"
+        fovLabel.Position = UDim2.fromOffset(7, 0)
+        fovLabel.Size = UDim2.new(1, -14, 1, 0)
+        fovLabel.BackgroundTransparency = 1
+        fovLabel.Text = "FOV"
+        fovLabel.TextColor3 = COLORS.LightPurple
+        fovLabel.Font = Enum.Font.GothamBold
+        fovLabel.TextSize = 10
+        fovLabel.TextXAlignment = Enum.TextXAlignment.Left
+        fovLabel.AutoButtonColor = false
+        fovLabel.ZIndex = 14
+        fovLabel.Parent = fovRow
+
+        local fovOverlay = Instance.new("Frame")
+        fovOverlay.Name = "FOVSettingsOverlay"
+        fovOverlay.Size = UDim2.fromScale(1, 1)
+        fovOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        fovOverlay.BackgroundTransparency = 0.35
+        fovOverlay.BorderSizePixel = 0
+        fovOverlay.Visible = false
+        fovOverlay.ZIndex = 90
+        fovOverlay.Parent = gui
+
+        local fovCard = Instance.new("Frame")
+        fovCard.Name = "FOVSettingsCard"
+        fovCard.AnchorPoint = Vector2.new(0.5, 0.5)
+        fovCard.Position = UDim2.fromScale(0.5, 0.5)
+        fovCard.Size = UDim2.new(0.82, 0, 0, 190)
+        fovCard.BackgroundColor3 = COLORS.Background
+        fovCard.BorderSizePixel = 0
+        fovCard.ZIndex = 91
+        fovCard.Parent = fovOverlay
+        addCorner(fovCard, 12)
+        addStroke(fovCard, COLORS.NeonPurple, 1.5)
+
+        local fovConstraint = Instance.new("UISizeConstraint")
+        fovConstraint.MaxSize = Vector2.new(360, 190)
+        fovConstraint.MinSize = Vector2.new(240, 190)
+        fovConstraint.Parent = fovCard
+
+        local fovTitle = Instance.new("TextLabel")
+        fovTitle.Name = "SettingsTitle"
+        fovTitle.BackgroundTransparency = 1
+        fovTitle.Position = UDim2.fromOffset(14, 12)
+        fovTitle.Size = UDim2.new(1, -28, 0, 26)
+        fovTitle.Text = "Field of View"
+        fovTitle.TextColor3 = COLORS.White
+        fovTitle.Font = Enum.Font.GothamBold
+        fovTitle.TextSize = 17
+        fovTitle.ZIndex = 92
+        fovTitle.Parent = fovCard
+
+        local fovValueLabel = Instance.new("TextLabel")
+        fovValueLabel.Name = "FOVValue"
+        fovValueLabel.BackgroundTransparency = 1
+        fovValueLabel.Position = UDim2.fromOffset(14, 48)
+        fovValueLabel.Size = UDim2.new(1, -28, 0, 24)
+        fovValueLabel.Text = "FOV: " .. fovValue
+        fovValueLabel.TextColor3 = COLORS.LightPurple
+        fovValueLabel.Font = Enum.Font.GothamSemibold
+        fovValueLabel.TextSize = 14
+        fovValueLabel.TextXAlignment = Enum.TextXAlignment.Left
+        fovValueLabel.ZIndex = 92
+        fovValueLabel.Parent = fovCard
+
+        local fovSlider = Instance.new("TextButton")
+        fovSlider.Name = "FOVSlider"
+        fovSlider.Position = UDim2.new(0, 16, 0, 83)
+        fovSlider.Size = UDim2.new(1, -32, 0, 12)
+        fovSlider.BackgroundColor3 = Color3.fromRGB(48, 31, 72)
+        fovSlider.BorderSizePixel = 0
+        fovSlider.Text = ""
+        fovSlider.AutoButtonColor = false
+        fovSlider.ZIndex = 92
+        fovSlider.Parent = fovCard
+        addCorner(fovSlider, 6)
+
+        local fovSliderFill = Instance.new("Frame")
+        fovSliderFill.Name = "SliderFill"
+        fovSliderFill.Size = UDim2.new(0, 0, 1, 0)
+        fovSliderFill.BackgroundColor3 = COLORS.NeonPurple
+        fovSliderFill.BorderSizePixel = 0
+        fovSliderFill.ZIndex = 93
+        fovSliderFill.Parent = fovSlider
+        addCorner(fovSliderFill, 6)
+
+        local fovSliderKnob = Instance.new("Frame")
+        fovSliderKnob.Name = "SliderKnob"
+        fovSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+        fovSliderKnob.Position = UDim2.new(0, 0, 0.5, 0)
+        fovSliderKnob.Size = UDim2.fromOffset(18, 18)
+        fovSliderKnob.BackgroundColor3 = COLORS.White
+        fovSliderKnob.BorderSizePixel = 0
+        fovSliderKnob.ZIndex = 94
+        fovSliderKnob.Parent = fovSlider
+        addCorner(fovSliderKnob, 9)
+
+        local function getFOVAlpha()
+            local range = 120 - defaultFOV
+            if range <= 0 then return 0 end
+            return math.clamp((fovValue - defaultFOV) / range, 0, 1)
+        end
+
+        local function updateFOVVisuals()
+            local alpha = getFOVAlpha()
+            fovValueLabel.Text = "FOV: " .. fovValue
+            fovSliderFill.Size = UDim2.new(alpha, 0, 1, 0)
+            fovSliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
+        end
+
+        local function applyFOV()
+            local currentCamera = workspace.CurrentCamera
+            if currentCamera then
+                currentCamera.FieldOfView = fovValue
+            end
+        end
+
+        local function setFOVFromX(x)
+            local trackWidth = fovSlider.AbsoluteSize.X
+            if trackWidth <= 0 then return end
+
+            local alpha = math.clamp(
+                (x - fovSlider.AbsolutePosition.X) / trackWidth,
+                0,
+                1
+            )
+            local range = 120 - defaultFOV
+            fovValue = math.clamp(
+                math.floor(defaultFOV + alpha * range + 0.5),
+                defaultFOV,
+                120
+            )
+            updateFOVVisuals()
+            applyFOV()
+        end
+
+        fovSlider.Activated:Connect(function()
+            setFOVFromX(UserInputService:GetMouseLocation().X)
+        end)
+
+        fovSlider.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                fovDraggingSlider = true
+                setFOVFromX(input.Position.X)
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if fovDraggingSlider and (
+                input.UserInputType == Enum.UserInputType.MouseMovement
+                or input.UserInputType == Enum.UserInputType.Touch
+            ) then
+                setFOVFromX(input.Position.X)
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                fovDraggingSlider = false
+            end
+        end)
+
+        local fovOkButton = Instance.new("TextButton")
+        fovOkButton.Name = "ConfirmFOVButton"
+        fovOkButton.AnchorPoint = Vector2.new(0.5, 1)
+        fovOkButton.Position = UDim2.new(0.5, 0, 1, -12)
+        fovOkButton.Size = UDim2.new(1, -32, 0, 34)
+        fovOkButton.BackgroundColor3 = COLORS.Purple
+        fovOkButton.BorderSizePixel = 0
+        fovOkButton.Text = "OK"
+        fovOkButton.TextColor3 = COLORS.White
+        fovOkButton.Font = Enum.Font.GothamBold
+        fovOkButton.TextSize = 14
+        fovOkButton.ZIndex = 92
+        fovOkButton.Parent = fovCard
+        addCorner(fovOkButton, 8)
+        addStroke(fovOkButton, COLORS.NeonPurple, 1)
+        fovOkButton.Activated:Connect(function()
+            fovOverlay.Visible = false
+        end)
+
+        fovLabel.InputBegan:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1
+                and input.UserInputType ~= Enum.UserInputType.Touch then
+                return
+            end
+
+            local now = os.clock()
+            if now - lastFOVRowTap <= 0.35 then
+                updateFOVVisuals()
+                fovOverlay.Visible = true
+                lastFOVRowTap = 0
+            else
+                lastFOVRowTap = now
+            end
+        end)
+
+        workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+            applyFOV()
+        end)
+
+        gui.Destroying:Connect(function()
+            fovDraggingSlider = false
+            local currentCamera = workspace.CurrentCamera
+            if currentCamera then
+                currentCamera.FieldOfView = defaultFOV
+            end
+        end)
+
+        updateFOVVisuals()
+    end
+end
