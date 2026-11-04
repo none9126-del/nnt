@@ -1104,11 +1104,12 @@ elseif i == 2 then
     end)
 
     local flyEnabled = false
-    local flySpeed = 400
+    local flySpeed = 60 -- Safer Studio-test default; slider range remains 16-400.
     local lastFlyRowTap = 0
     local flyVelocity, flyAttachment, flyConnection
     local flyAlignOrientation
     local flyOldAutoRotate
+    local flyActiveHumanoid
     local flySoundConnection
     local flyMutedSounds = {}
 
@@ -1130,7 +1131,7 @@ elseif i == 2 then
     flyLabel.Position = UDim2.fromOffset(7, 0)
     flyLabel.Size = UDim2.new(1, -52, 1, 0)
     flyLabel.BackgroundTransparency = 1
-    flyLabel.Text = "Fly"
+    flyLabel.Text = "Fly Bypass (TEST)"
     flyLabel.TextColor3 = COLORS.LightPurple
     flyLabel.Font = Enum.Font.GothamBold
     flyLabel.TextSize = 10
@@ -1201,7 +1202,7 @@ elseif i == 2 then
     flyTitle.BackgroundTransparency = 1
     flyTitle.Position = UDim2.fromOffset(14, 12)
     flyTitle.Size = UDim2.new(1, -28, 0, 26)
-    flyTitle.Text = "Fly Speed"
+    flyTitle.Text = "Fly Bypass (TEST) Speed"
     flyTitle.TextColor3 = COLORS.White
     flyTitle.Font = Enum.Font.GothamBold
     flyTitle.TextSize = 17
@@ -1309,37 +1310,58 @@ elseif i == 2 then
     end)
 
     local function stopFly()
-        if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
-        if flySoundConnection then flySoundConnection:Disconnect(); flySoundConnection = nil end
+        if flyConnection then
+            flyConnection:Disconnect()
+            flyConnection = nil
+        end
+        if flySoundConnection then
+            flySoundConnection:Disconnect()
+            flySoundConnection = nil
+        end
+
         for sound, oldVolume in pairs(flyMutedSounds) do
-            if sound and sound.Parent then sound.Volume = oldVolume end
+            if sound and sound.Parent then
+                sound.Volume = oldVolume
+            end
         end
         table.clear(flyMutedSounds)
-        if flyVelocity then flyVelocity:Destroy(); flyVelocity = nil end
-        if flyAttachment then flyAttachment:Destroy(); flyAttachment = nil end
-        if flyAlignOrientation then flyAlignOrientation:Destroy(); flyAlignOrientation = nil end
-        local character = player.Character
-        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.PlatformStand = false
-            if flyOldAutoRotate ~= nil then
-                humanoid.AutoRotate = flyOldAutoRotate
-                flyOldAutoRotate = nil
-            end
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+
+        if flyVelocity then
+            flyVelocity:Destroy()
+            flyVelocity = nil
         end
+        if flyAttachment then
+            flyAttachment:Destroy()
+            flyAttachment = nil
+        end
+        if flyAlignOrientation then
+            flyAlignOrientation:Destroy()
+            flyAlignOrientation = nil
+        end
+
+        -- Restore the exact Humanoid that this flight session modified.
+        if flyActiveHumanoid and flyActiveHumanoid.Parent then
+            if flyOldAutoRotate ~= nil then
+                flyActiveHumanoid.AutoRotate = flyOldAutoRotate
+            end
+        end
+        flyActiveHumanoid = nil
+        flyOldAutoRotate = nil
     end
 
     local function startFly()
         local character = player.Character
         local root = character and character:FindFirstChild("HumanoidRootPart")
         local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        if not root or not humanoid then
-            flyEnabled = false
-            return
+        if not root or not humanoid or humanoid.Health <= 0 then
+            return false
         end
+
         stopFly()
-        -- Silence character sounds while flying and restore their original volumes when disabled.
+        flyActiveHumanoid = humanoid
+        flyOldAutoRotate = humanoid.AutoRotate
+
+        -- Keep the original sound-muting behavior and restore volumes on stop.
         local function muteCharacterSound(instance)
             if instance:IsA("Sound") and flyMutedSounds[instance] == nil then
                 flyMutedSounds[instance] = instance.Volume
@@ -1354,6 +1376,7 @@ elseif i == 2 then
         flyAttachment = Instance.new("Attachment")
         flyAttachment.Name = "ZenClientFlyAttachment"
         flyAttachment.Parent = root
+
         flyVelocity = Instance.new("LinearVelocity")
         flyVelocity.Name = "ZenClientFlyVelocity"
         flyVelocity.Attachment0 = flyAttachment
@@ -1363,9 +1386,6 @@ elseif i == 2 then
         flyVelocity.VectorVelocity = Vector3.zero
         flyVelocity.Parent = root
 
-        -- Keep the avatar upright without PlatformStand, which can leave the
-        -- character lying sideways. The camera controls facing and flight direction.
-        flyOldAutoRotate = humanoid.AutoRotate
         humanoid.AutoRotate = false
         humanoid.PlatformStand = false
 
@@ -1374,25 +1394,26 @@ elseif i == 2 then
         flyAlignOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
         flyAlignOrientation.Attachment0 = flyAttachment
         flyAlignOrientation.RigidityEnabled = false
-        flyAlignOrientation.Responsiveness = 35
+        flyAlignOrientation.Responsiveness = 25
         flyAlignOrientation.MaxTorque = math.huge
         flyAlignOrientation.Parent = root
 
-        flyConnection = RunService.RenderStepped:Connect(function()
-            if not flyEnabled or not root.Parent or not humanoid.Parent then
+        -- MoveDirection is already world-space. Do not rotate it through the
+        -- pitched camera CFrame: doing so introduced unwanted vertical speed.
+        -- This is a normal local Studio flight controller, not an anti-cheat bypass.
+        flyConnection = RunService.PreSimulation:Connect(function()
+            if not flyEnabled or not root.Parent or not humanoid.Parent or humanoid.Health <= 0 then
+                -- Stop this character's controller; keep the toggle preference
+                -- so CharacterAdded can restore flight after a respawn.
                 stopFly()
                 return
             end
 
-            local camera = workspace.CurrentCamera
-            if not camera then return end
-
-            -- Convert the normal movement input into camera-local directions,
-            -- then use the camera's full look vector so aiming up/down affects flight.
             local moveDirection = humanoid.MoveDirection
-            local localMove = camera.CFrame:VectorToObjectSpace(moveDirection)
-            local cameraMove = (camera.CFrame.RightVector * localMove.X)
-                + (camera.CFrame.LookVector * -localMove.Z)
+            local horizontalDirection = Vector3.new(moveDirection.X, 0, moveDirection.Z)
+            if horizontalDirection.Magnitude > 1 then
+                horizontalDirection = horizontalDirection.Unit
+            end
 
             local vertical = 0
             if UserInputService:IsKeyDown(Enum.KeyCode.Space)
@@ -1404,25 +1425,37 @@ elseif i == 2 then
                 vertical -= flySpeed
             end
 
-            local flightDirection = cameraMove * flySpeed + Vector3.new(0, vertical, 0)
-            flyVelocity.VectorVelocity = flightDirection
+            flyVelocity.VectorVelocity = (horizontalDirection * flySpeed)
+                + Vector3.new(0, vertical, 0)
 
-            -- Face the horizontal camera direction while keeping the body upright.
-            local look = camera.CFrame.LookVector
-            local flatLook = Vector3.new(look.X, 0, look.Z)
-            if flatLook.Magnitude > 0.001 then
-                flyAlignOrientation.CFrame = CFrame.lookAt(
-                    Vector3.zero,
-                    flatLook.Unit,
-                    Vector3.yAxis
-                )
+            local camera = workspace.CurrentCamera
+            if camera then
+                local look = camera.CFrame.LookVector
+                local flatLook = Vector3.new(look.X, 0, look.Z)
+                if flatLook.Magnitude > 0.001 then
+                    flyAlignOrientation.CFrame = CFrame.lookAt(
+                        Vector3.zero,
+                        flatLook.Unit,
+                        Vector3.yAxis
+                    )
+                end
             end
         end)
+
+        return true
     end
 
     local function setFlyEnabled(enabled)
-        flyEnabled = enabled
-        if enabled then startFly() else stopFly() end
+        if enabled then
+            flyEnabled = true
+            if not startFly() then
+                flyEnabled = false
+            end
+        else
+            flyEnabled = false
+            stopFly()
+        end
+
         local active = flyEnabled
         TweenService:Create(flySwitch, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             BackgroundColor3 = active and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
@@ -1434,18 +1467,22 @@ elseif i == 2 then
         flySwitchStroke.Color = active and COLORS.LightPurple or COLORS.NeonPurple
         flyRowStroke.Color = active and COLORS.NeonPurple or COLORS.Purple
         flyLabel.TextColor3 = active and COLORS.White or COLORS.LightPurple
-        flyLabel.Text = active and "Fly: ON" or "Fly"
+        flyLabel.Text = active and "Fly Bypass (TEST): ON" or "Fly Bypass (TEST)"
     end
+
     flySwitch.Activated:Connect(function()
         setFlyEnabled(not flyEnabled)
     end)
+
     player.CharacterAdded:Connect(function(character)
         if flyEnabled then
             local humanoid = character:WaitForChild("Humanoid", 5)
             local root = character:WaitForChild("HumanoidRootPart", 5)
             if humanoid and root and flyEnabled then
                 task.wait(0.2)
-                startFly()
+                if flyEnabled then
+                    startFly()
+                end
             end
         end
     end)
