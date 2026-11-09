@@ -4,6 +4,14 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Stats = game:GetService("Stats")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+
+-- AutoConfig registry: each feature exposes a safe getter/setter pair.
+local AUTO_CONFIG_FILE = "ZenClient_AutoConfig.json"
+local autoConfigItems = {}
+local function registerAutoConfigItem(name, getter, setter)
+    autoConfigItems[name] = { get = getter, set = setter }
+end
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -831,6 +839,33 @@ if i == 1 then
             enabled and COLORS.White or COLORS.LightPurple
     end)
 
+    registerAutoConfigItem("Aimbot", function()
+        return { enabled = aimEnabled, lockWidth = lockWidth, hardness = aimHardness }
+    end, function(value)
+        if type(value) ~= "table" then return end
+        if type(value.lockWidth) == "number" then
+            lockWidth = math.clamp(value.lockWidth, 20, 200)
+            widthValue.Text = "Width: " .. lockWidth .. "%"
+            sliderFill.Size = UDim2.new((lockWidth - 20) / 180, 0, 1, 0)
+            sliderKnob.Position = UDim2.new((lockWidth - 20) / 180, 0, 0.5, 0)
+        end
+        if type(value.hardness) == "number" then
+            aimHardness = math.clamp(value.hardness, 1, 10)
+            hardnessValue.Text = "Hardness: " .. aimHardness
+            hardnessFill.Size = UDim2.new((aimHardness - 1) / 9, 0, 1, 0)
+            hardnessKnob.Position = UDim2.new((aimHardness - 1) / 9, 0, 0.5, 0)
+        end
+        if type(value.enabled) == "boolean" and value.enabled ~= aimEnabled then
+            if value.enabled then startAimLock() else stopAimLock() end
+            local active = aimEnabled
+            switchButton.BackgroundColor3 = active and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
+            switchKnob.Position = active and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+            switchKnob.BackgroundColor3 = active and COLORS.White or COLORS.LightPurple
+            switchStroke.Color = active and COLORS.LightPurple or COLORS.NeonPurple
+            rowStroke.Color = active and COLORS.NeonPurple or COLORS.Purple
+            aimbotLabel.TextColor3 = active and COLORS.White or COLORS.LightPurple
+        end
+    end)
 
 elseif i == 2 then
     local speedEnabled = false
@@ -1092,6 +1127,23 @@ elseif i == 2 then
 
     speedSwitch.Activated:Connect(function()
         setSpeedEnabled(not speedEnabled)
+    end)
+    registerAutoConfigItem("Speed", function()
+        return { enabled = speedEnabled, value = speedValue }
+    end, function(value)
+        if type(value) ~= "table" then return end
+        if type(value.value) == "number" then
+            speedValue = math.clamp(math.floor(value.value), 16, 100)
+            speedValueLabel.Text = "Speed: " .. speedValue
+            local alpha = (speedValue - 16) / 84
+            speedSliderFill.Size = UDim2.new(alpha, 0, 1, 0)
+            speedSliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
+        end
+        if type(value.enabled) == "boolean" and value.enabled ~= speedEnabled then
+            setSpeedEnabled(value.enabled)
+        elseif speedEnabled then
+            applySpeed()
+        end
     end)
 
     player.CharacterAdded:Connect(function(character)
@@ -1473,6 +1525,21 @@ elseif i == 2 then
     flySwitch.Activated:Connect(function()
         setFlyEnabled(not flyEnabled)
     end)
+    registerAutoConfigItem("Fly", function()
+        return { enabled = flyEnabled, speed = flySpeed }
+    end, function(value)
+        if type(value) ~= "table" then return end
+        if type(value.speed) == "number" then
+            flySpeed = math.clamp(math.floor(value.speed), 16, 400)
+            flyValueLabel.Text = "Fly Speed: " .. flySpeed
+            local alpha = (flySpeed - 16) / 384
+            flySliderFill.Size = UDim2.new(alpha, 0, 1, 0)
+            flySliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
+        end
+        if type(value.enabled) == "boolean" and value.enabled ~= flyEnabled then
+            setFlyEnabled(value.enabled)
+        end
+    end)
 
     player.CharacterAdded:Connect(function(character)
         if flyEnabled then
@@ -1483,6 +1550,265 @@ elseif i == 2 then
                 if flyEnabled then
                     startFly()
                 end
+            end
+        end
+    end)
+
+elseif i == 4 then
+    local miscRow = Instance.new("Frame")
+    miscRow.Name = "AutoConfigRow"
+    miscRow.AnchorPoint = Vector2.new(0.5, 0)
+    miscRow.Position = UDim2.new(0.5, 0, 0, 49)
+    miscRow.Size = UDim2.new(1, -12, 0, 30)
+    miscRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
+    miscRow.BorderSizePixel = 0
+    miscRow.ZIndex = 13
+    miscRow.Parent = panel
+    addCorner(miscRow, 6)
+    local miscRowStroke = addStroke(miscRow, COLORS.Purple, 1)
+
+    local autoConfigLabel = Instance.new("TextButton")
+    autoConfigLabel.Name = "AutoConfigLabel"
+    autoConfigLabel.Position = UDim2.fromOffset(4, 0)
+    autoConfigLabel.Size = UDim2.new(1, -8, 1, 0)
+    autoConfigLabel.BackgroundTransparency = 1
+    autoConfigLabel.Text = "AutoConfig"
+    autoConfigLabel.TextColor3 = COLORS.LightPurple
+    autoConfigLabel.Font = Enum.Font.GothamBold
+    autoConfigLabel.TextSize = 9
+    autoConfigLabel.TextXAlignment = Enum.TextXAlignment.Center
+    autoConfigLabel.TextTruncate = Enum.TextTruncate.AtEnd
+    autoConfigLabel.AutoButtonColor = false
+    autoConfigLabel.ZIndex = 14
+    autoConfigLabel.Parent = miscRow
+
+    local autoToggleRow = Instance.new("Frame")
+    autoToggleRow.Name = "AutoConfigToggleRow"
+    autoToggleRow.AnchorPoint = Vector2.new(0.5, 0)
+    autoToggleRow.Position = UDim2.new(0.5, 0, 0, 85)
+    autoToggleRow.Size = UDim2.new(1, -12, 0, 30)
+    autoToggleRow.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
+    autoToggleRow.BorderSizePixel = 0
+    autoToggleRow.ZIndex = 13
+    autoToggleRow.Parent = panel
+    addCorner(autoToggleRow, 6)
+    local autoToggleRowStroke = addStroke(autoToggleRow, COLORS.Purple, 1)
+
+    local autoToggleLabel = Instance.new("TextLabel")
+    autoToggleLabel.BackgroundTransparency = 1
+    autoToggleLabel.Position = UDim2.fromOffset(7, 0)
+    autoToggleLabel.Size = UDim2.new(1, -38, 1, 0)
+    autoToggleLabel.Text = "AUTO LOAD"
+    autoToggleLabel.TextColor3 = COLORS.LightPurple
+    autoToggleLabel.Font = Enum.Font.GothamBold
+    autoToggleLabel.TextSize = 9
+    autoToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    autoToggleLabel.ZIndex = 14
+    autoToggleLabel.Parent = autoToggleRow
+
+    local autoConfigSwitch = Instance.new("TextButton")
+    autoConfigSwitch.Name = "AutoConfigSwitch"
+    autoConfigSwitch.AnchorPoint = Vector2.new(1, 0.5)
+    autoConfigSwitch.Position = UDim2.new(1, -4, 0.5, 0)
+    autoConfigSwitch.Size = UDim2.fromOffset(23, 14)
+    autoConfigSwitch.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
+    autoConfigSwitch.BorderSizePixel = 0
+    autoConfigSwitch.Text = ""
+    autoConfigSwitch.AutoButtonColor = false
+    autoConfigSwitch.ZIndex = 15
+    autoConfigSwitch.Parent = autoToggleRow
+    addCorner(autoConfigSwitch, 7)
+    local autoConfigSwitchStroke = addStroke(autoConfigSwitch, COLORS.NeonPurple, 1)
+    local autoConfigKnob = Instance.new("Frame")
+    autoConfigKnob.Name = "SwitchKnob"
+    autoConfigKnob.AnchorPoint = Vector2.new(0, 0.5)
+    autoConfigKnob.Position = UDim2.new(0, 2, 0.5, 0)
+    autoConfigKnob.Size = UDim2.fromOffset(10, 10)
+    autoConfigKnob.BackgroundColor3 = COLORS.LightPurple
+    autoConfigKnob.BorderSizePixel = 0
+    autoConfigKnob.ZIndex = 16
+    autoConfigKnob.Parent = autoConfigSwitch
+    addCorner(autoConfigKnob, 5)
+
+    local configOverlay = Instance.new("Frame")
+    configOverlay.Name = "AutoConfigOverlay"
+    configOverlay.Size = UDim2.fromScale(1, 1)
+    configOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+    configOverlay.BackgroundTransparency = 0.35
+    configOverlay.BorderSizePixel = 0
+    configOverlay.Visible = false
+    configOverlay.ZIndex = 100
+    configOverlay.Parent = gui
+
+    local configCard = Instance.new("Frame")
+    configCard.Name = "AutoConfigCard"
+    configCard.AnchorPoint = Vector2.new(0.5, 0.5)
+    configCard.Position = UDim2.fromScale(0.5, 0.5)
+    configCard.Size = UDim2.new(0.82, 0, 0, 178)
+    configCard.BackgroundColor3 = COLORS.Background
+    configCard.BorderSizePixel = 0
+    configCard.ZIndex = 101
+    configCard.Parent = configOverlay
+    addCorner(configCard, 12)
+    addStroke(configCard, COLORS.NeonPurple, 1.5)
+    local configConstraint = Instance.new("UISizeConstraint")
+    configConstraint.MaxSize = Vector2.new(340, 178)
+    configConstraint.MinSize = Vector2.new(235, 178)
+    configConstraint.Parent = configCard
+
+    local configTitle = Instance.new("TextLabel")
+    configTitle.BackgroundTransparency = 1
+    configTitle.Position = UDim2.fromOffset(14, 12)
+    configTitle.Size = UDim2.new(1, -28, 0, 26)
+    configTitle.Text = "AutoConfig Manager"
+    configTitle.TextColor3 = COLORS.White
+    configTitle.Font = Enum.Font.GothamBold
+    configTitle.TextSize = 16
+    configTitle.ZIndex = 102
+    configTitle.Parent = configCard
+
+    local configStatus = Instance.new("TextLabel")
+    configStatus.Name = "Status"
+    configStatus.BackgroundTransparency = 1
+    configStatus.Position = UDim2.fromOffset(14, 42)
+    configStatus.Size = UDim2.new(1, -28, 0, 28)
+    configStatus.Text = "Double-tap AutoConfig to manage settings"
+    configStatus.TextColor3 = COLORS.LightPurple
+    configStatus.Font = Enum.Font.Gotham
+    configStatus.TextSize = 11
+    configStatus.TextWrapped = true
+    configStatus.ZIndex = 102
+    configStatus.Parent = configCard
+
+    local function makeConfigButton(name, text, y)
+        local button = Instance.new("TextButton")
+        button.Name = name
+        button.Position = UDim2.new(0, 14, 0, y)
+        button.Size = UDim2.new(1, -28, 0, 30)
+        button.BackgroundColor3 = COLORS.Purple
+        button.BorderSizePixel = 0
+        button.Text = text
+        button.TextColor3 = COLORS.White
+        button.Font = Enum.Font.GothamBold
+        button.TextSize = 12
+        button.AutoButtonColor = false
+        button.ZIndex = 103
+        button.Parent = configCard
+        addCorner(button, 7)
+        addStroke(button, COLORS.NeonPurple, 1)
+        return button
+    end
+    local saveConfigButton = makeConfigButton("SaveConfigButton", "SAVE CONFIG", 78)
+    local deleteConfigButton = makeConfigButton("DeleteConfigButton", "DELETE CONFIG", 114)
+
+    local autoConfigEnabled = false
+    local function setAutoConfigEnabled(on)
+        autoConfigEnabled = on
+        TweenService:Create(autoConfigSwitch, TweenInfo.new(0.16), {
+            BackgroundColor3 = on and Color3.fromRGB(100, 35, 175) or Color3.fromRGB(55, 35, 75)
+        }):Play()
+        TweenService:Create(autoConfigKnob, TweenInfo.new(0.16), {
+            Position = on and UDim2.new(1, -12, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
+            BackgroundColor3 = on and COLORS.White or COLORS.LightPurple
+        }):Play()
+        autoConfigSwitchStroke.Color = on and COLORS.LightPurple or COLORS.NeonPurple
+        miscRowStroke.Color = on and COLORS.NeonPurple or COLORS.Purple
+        autoToggleRowStroke.Color = on and COLORS.NeonPurple or COLORS.Purple
+        autoToggleLabel.TextColor3 = on and COLORS.White or COLORS.LightPurple
+        autoConfigLabel.TextColor3 = on and COLORS.White or COLORS.LightPurple
+    end
+
+    local function loadAutoConfig()
+        if type(readfile) ~= "function" or type(isfile) ~= "function" then
+            configStatus.Text = "Load unavailable: executor file API required"
+            configStatus.TextColor3 = COLORS.Red
+            return false
+        end
+        local ok, raw = pcall(function()
+            if not isfile(AUTO_CONFIG_FILE) then error("No saved config") end
+            return readfile(AUTO_CONFIG_FILE)
+        end)
+        if not ok then
+            configStatus.Text = "No saved config found"
+            configStatus.TextColor3 = COLORS.Yellow
+            return false
+        end
+        local decodedOk, data = pcall(function() return HttpService:JSONDecode(raw) end)
+        if not decodedOk or type(data) ~= "table" then
+            configStatus.Text = "Config file is invalid"
+            configStatus.TextColor3 = COLORS.Red
+            return false
+        end
+        for name, value in pairs(data) do
+            local item = autoConfigItems[name]
+            if item and type(item.set) == "function" then
+                pcall(item.set, value)
+            end
+        end
+        configStatus.Text = "Config loaded successfully"
+        configStatus.TextColor3 = COLORS.Green
+        return true
+    end
+
+    autoConfigSwitch.Activated:Connect(function()
+        setAutoConfigEnabled(not autoConfigEnabled)
+        if autoConfigEnabled then loadAutoConfig() end
+    end)
+
+    local lastAutoConfigTap = 0
+    autoConfigLabel.Activated:Connect(function()
+        local now = os.clock()
+        if now - lastAutoConfigTap <= 0.35 then
+            configOverlay.Visible = true
+            lastAutoConfigTap = 0
+        else
+            lastAutoConfigTap = now
+        end
+    end)
+
+    saveConfigButton.Activated:Connect(function()
+        if type(writefile) ~= "function" then
+            configStatus.Text = "Save unavailable: executor file API required"
+            configStatus.TextColor3 = COLORS.Red
+            return
+        end
+        local snapshot = {}
+        for name, item in pairs(autoConfigItems) do
+            if type(item.get) == "function" then
+                local ok, value = pcall(item.get)
+                if ok then snapshot[name] = value end
+            end
+        end
+        local ok, encoded = pcall(function() return HttpService:JSONEncode(snapshot) end)
+        if not ok then
+            configStatus.Text = "Could not encode config"
+            configStatus.TextColor3 = COLORS.Red
+            return
+        end
+        local saved, err = pcall(writefile, AUTO_CONFIG_FILE, encoded)
+        configStatus.Text = saved and "Config saved successfully" or ("Save failed: " .. tostring(err))
+        configStatus.TextColor3 = saved and COLORS.Green or COLORS.Red
+    end)
+
+    deleteConfigButton.Activated:Connect(function()
+        if type(delfile) ~= "function" or type(isfile) ~= "function" then
+            configStatus.Text = "Delete unavailable: executor file API required"
+            configStatus.TextColor3 = COLORS.Red
+            return
+        end
+        local ok, err = pcall(function()
+            if isfile(AUTO_CONFIG_FILE) then delfile(AUTO_CONFIG_FILE) end
+        end)
+        configStatus.Text = ok and "Saved config deleted" or ("Delete failed: " .. tostring(err))
+        configStatus.TextColor3 = ok and COLORS.Green or COLORS.Red
+    end)
+
+    configOverlay.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local pos = input.Position
+            local cardPos, cardSize = configCard.AbsolutePosition, configCard.AbsoluteSize
+            if pos.X < cardPos.X or pos.X > cardPos.X + cardSize.X or pos.Y < cardPos.Y or pos.Y > cardPos.Y + cardSize.Y then
+                configOverlay.Visible = false
             end
         end
     end)
@@ -1658,6 +1984,14 @@ do
             hitboxRowStroke.Color = on and COLORS.NeonPurple or COLORS.Purple
             hitboxLabel.TextColor3 = on and COLORS.White or COLORS.LightPurple
         end
+
+        registerAutoConfigItem("Hitbox", function()
+            return { enabled = hitboxEnabled }
+        end, function(value)
+            if type(value) == "table" and type(value.enabled) == "boolean" and value.enabled ~= hitboxEnabled then
+                setHitboxEnabled(value.enabled)
+            end
+        end)
 
         hitboxSwitch.Activated:Connect(function()
             setHitboxEnabled(not hitboxEnabled)
@@ -2236,6 +2570,18 @@ local slider=Instance.new('TextButton'); slider.Position=UDim2.new(0,16,0,83); s
 local fill=Instance.new('Frame'); fill.Size=UDim2.new(1/7,0,1,0); fill.BackgroundColor3=COLORS.NeonPurple; fill.BorderSizePixel=0; fill.ZIndex=83; fill.Parent=slider; addCorner(fill,6)
 local sk=Instance.new('Frame'); sk.AnchorPoint=Vector2.new(.5,.5); sk.Position=UDim2.new(1/7,0,.5,0); sk.Size=UDim2.fromOffset(18,18); sk.BackgroundColor3=COLORS.White; sk.BorderSizePixel=0; sk.ZIndex=84; sk.Parent=slider; addCorner(sk,9)
 local function setThickness(x) local w=slider.AbsoluteSize.X; if w<=0 then return end; local a=math.clamp((x-slider.AbsolutePosition.X)/w,0,1); thickness=0.5+math.floor(a*7+0.5)*0.5; local n=(thickness-0.5)/3.5; val.Text='Thickness: '..string.format('%.1f',thickness)..' px'; fill.Size=UDim2.new(n,0,1,0); sk.Position=UDim2.new(n,0,.5,0); for _,line in pairs(playerLines) do if line and line.Parent then line.Size=UDim2.fromOffset(line.Size.X.Offset,thickness) end end end
+registerAutoConfigItem("ESPPlayerThickness", function() return { value = thickness } end, function(value)
+    if type(value) == "table" and type(value.value) == "number" then
+        thickness = math.clamp(math.floor(value.value * 2 + 0.5) / 2, 0.5, 4)
+        local n = (thickness - 0.5) / 3.5
+        val.Text = 'Thickness: ' .. string.format('%.1f', thickness) .. ' px'
+        fill.Size = UDim2.new(n, 0, 1, 0)
+        sk.Position = UDim2.new(n, 0, .5, 0)
+        for _, line in pairs(playerLines) do
+            if line and line.Parent then line.Size = UDim2.fromOffset(line.Size.X.Offset, thickness) end
+        end
+    end
+end)
 local dragging=false
 slider.Activated:Connect(function() setThickness(UserInputService:GetMouseLocation().X) end)
 slider.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true; setThickness(i.Position.X) end end)
@@ -2280,6 +2626,9 @@ local function updateLine()
     end
 end
 local function setEnabled(on) enabled=on; if conn then conn:Disconnect(); conn=nil end; if on then conn=RunService.RenderStepped:Connect(updateLine) else hideAllPlayerLines() end; TweenService:Create(sw,TweenInfo.new(.16),{BackgroundColor3=on and Color3.fromRGB(100,35,175) or Color3.fromRGB(55,35,75)}):Play(); TweenService:Create(knob,TweenInfo.new(.16),{Position=on and UDim2.new(1,-12,.5,0) or UDim2.new(0,2,.5,0),BackgroundColor3=on and COLORS.White or COLORS.LightPurple}):Play(); ss.Color=on and COLORS.LightPurple or COLORS.NeonPurple; rs.Color=on and COLORS.NeonPurple or COLORS.Purple; label.TextColor3=on and COLORS.White or COLORS.LightPurple end
+registerAutoConfigItem("ESPPlayer", function() return { enabled = enabled } end, function(value)
+    if type(value) == "table" and type(value.enabled) == "boolean" and value.enabled ~= enabled then setEnabled(value.enabled) end
+end)
 sw.Activated:Connect(function() setEnabled(not enabled) end)
 label.Activated:Connect(function() local now=os.clock(); if now-lastTap<=.35 then overlay.Visible=true; lastTap=0 else lastTap=now end end)
 gui.Destroying:Connect(function() if conn then conn:Disconnect() end; for _,line in pairs(playerLines) do if line then line:Destroy() end end end)
@@ -2647,6 +2996,21 @@ do
             boxLabel.TextColor3 = on and COLORS.White or COLORS.LightPurple
         end
 
+        registerAutoConfigItem("ESPBox", function()
+            return { enabled = boxEnabled, size = boxSizePercent }
+        end, function(value)
+            if type(value) ~= "table" then return end
+            if type(value.size) == "number" then
+                boxSizePercent = math.clamp(math.floor(value.size), 50, 150)
+                local alpha = (boxSizePercent - 50) / 100
+                boxValue.Text = "Size: " .. boxSizePercent .. "%"
+                boxSliderFill.Size = UDim2.new(alpha, 0, 1, 0)
+                boxSliderKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
+                refreshBoxVisuals()
+            end
+            if type(value.enabled) == "boolean" and value.enabled ~= boxEnabled then setBoxEnabled(value.enabled) end
+        end)
+
         boxSwitch.Activated:Connect(function()
             setBoxEnabled(not boxEnabled)
         end)
@@ -2840,6 +3204,15 @@ do
                 currentCamera.FieldOfView = fovValue
             end
         end
+        registerAutoConfigItem("FOV", function()
+            return { value = fovValue }
+        end, function(value)
+            if type(value) == "table" and type(value.value) == "number" then
+                fovValue = math.clamp(math.floor(value.value), defaultFOV, 120)
+                updateFOVVisuals()
+                applyFOV()
+            end
+        end)
 
         local function setFOVFromX(x)
             local trackWidth = fovSlider.AbsoluteSize.X
