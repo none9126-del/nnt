@@ -156,6 +156,7 @@ Enum.EasingDirection.InOut, -1),
 
 local beta = Instance.new("TextLabel")
 beta.Name = "BetaBadge"
+beta.Visible = false
 beta.AnchorPoint = Vector2.new(0, 0.5)
 beta.BackgroundColor3 = COLORS.Purple
 beta.BorderSizePixel = 0
@@ -295,7 +296,7 @@ panelLayout.SortOrder = Enum.SortOrder.LayoutOrder
 panelLayout.Padding = UDim.new(0, CONFIG.PanelGap)
 panelLayout.Parent = panelContainer
 
-local PANEL_LABELS = { "Combat", "Player", "Render", "Misc", "BETA" }
+local PANEL_LABELS = { "Combat", "Player", "Render", "Misc", "Anit ALL" }
 local panels = {}
 
 
@@ -3283,5 +3284,385 @@ do
         end)
 
         updateFOVVisuals()
+    end
+end
+
+
+
+--==================================================
+-- Anit ALL - Script input panel (UI ONLY)
+-- Double-tap the "Anit ALL" panel title to open.
+-- This editor stores text in the textbox only; it does NOT execute code.
+--==================================================
+do
+    local antiAllPanel = panels and panels[5]
+    if antiAllPanel then
+        local lastAntiAllTap = 0
+
+        local openButton = Instance.new("TextButton")
+        openButton.Name = "AnitALL_OpenSettings"
+        openButton.Position = UDim2.fromOffset(6, 4)
+        openButton.Size = UDim2.new(1, -12, 0, 30)
+        openButton.BackgroundColor3 = Color3.fromRGB(25, 13, 53)
+        openButton.BorderSizePixel = 0
+        openButton.Text = "Anit ALL   ›"
+        openButton.TextColor3 = COLORS.LightPurple
+        openButton.Font = Enum.Font.GothamBold
+        openButton.TextSize = 12
+        openButton.AutoButtonColor = false
+        openButton.ZIndex = 15
+        openButton.Parent = antiAllPanel
+        addCorner(openButton, 6)
+        addStroke(openButton, COLORS.Purple, 1)
+
+        local overlay = Instance.new("Frame")
+        overlay.Name = "AnitALL_SettingsOverlay"
+        overlay.Size = UDim2.fromScale(1, 1)
+        overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        overlay.BackgroundTransparency = 0.32
+        overlay.BorderSizePixel = 0
+        overlay.Visible = false
+        overlay.ZIndex = 120
+        overlay.Parent = gui
+
+        local card = Instance.new("Frame")
+        card.Name = "AnitALL_SettingsCard"
+        card.AnchorPoint = Vector2.new(0.5, 0.5)
+        card.Position = UDim2.fromScale(0.5, 0.5)
+        card.Size = UDim2.new(0.9, 0, 0.78, 0)
+        card.BackgroundColor3 = COLORS.Background
+        card.BorderSizePixel = 0
+        card.ZIndex = 121
+        card.Parent = overlay
+        addCorner(card, 12)
+        addStroke(card, COLORS.NeonPurple, 1.5)
+
+        local cardConstraint = Instance.new("UISizeConstraint")
+        cardConstraint.MaxSize = Vector2.new(560, 520)
+        cardConstraint.MinSize = Vector2.new(250, 300)
+        cardConstraint.Parent = card
+
+        local settingsTitle = Instance.new("TextLabel")
+        settingsTitle.Name = "AnitALL_SettingsTitle"
+        settingsTitle.Position = UDim2.fromOffset(14, 10)
+        settingsTitle.Size = UDim2.new(1, -28, 0, 28)
+        settingsTitle.BackgroundTransparency = 1
+        settingsTitle.Text = "Amit kick v2"
+        settingsTitle.TextColor3 = COLORS.Green
+        settingsTitle.Font = Enum.Font.GothamBold
+        settingsTitle.TextSize = 18
+        settingsTitle.TextXAlignment = Enum.TextXAlignment.Left
+        settingsTitle.ZIndex = 122
+        settingsTitle.Parent = card
+
+        local instruction = Instance.new("TextLabel")
+        instruction.Name = "ScriptBoxInstruction"
+        instruction.Position = UDim2.fromOffset(14, 42)
+        instruction.Size = UDim2.new(1, -28, 0, 38)
+        instruction.BackgroundTransparency = 1
+        instruction.Text = "วางสคริปต์ของคุณในช่องด้านล่าง"
+        instruction.TextColor3 = COLORS.LightPurple
+        instruction.Font = Enum.Font.Gotham
+        instruction.TextSize = 12
+        instruction.TextWrapped = true
+        instruction.TextXAlignment = Enum.TextXAlignment.Left
+        instruction.ZIndex = 122
+        instruction.Parent = card
+
+        local scriptBox = Instance.new("TextBox")
+        scriptBox.Name = "AnitALL_ScriptInput"
+        scriptBox.Position = UDim2.fromOffset(12, 84)
+        scriptBox.Size = UDim2.new(1, -24, 1, -142)
+        scriptBox.BackgroundColor3 = Color3.fromRGB(20, 14, 43)
+        scriptBox.BorderSizePixel = 0
+        scriptBox.Text = [=[local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local Player = Players.LocalPlayer
+
+-- ระบบสลับเปิด-ปิดอัตโนมัติเมื่อกดรันซ้ำ (รันครั้งแรก = เปิด, รันอีกครั้ง = ปิดและเคลียร์ดาวทั้งหมด)
+if getgenv().ShurikenAntiKick then
+    getgenv().ShurikenAntiKick = false
+    local inv = Workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+    local destroyrem = RS:FindFirstChild("MenuToys") and RS.MenuToys:FindFirstChild("DestroyToy")
+    if inv and destroyrem then
+        for _, v in pairs(inv:GetChildren()) do
+            if v.Name == "AntiKick1" or v.Name == "AntiKick2" or v.Name == "AntiKick" or v.Name == "NinjaShuriken" then
+                pcall(function() destroyrem:FireServer(v) end)
+            end
+        end
+    end
+    warn("[Anti-Kick x2] ปิดการทำงานและลบดาวกระจายทั้ง 2 อันแล้ว")
+    return
+end
+
+getgenv().ShurikenAntiKick = true
+warn("[Anti-Kick x2] เริ่มทำงาน...")
+
+local function ClearKunai()
+    local inv = Workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+    local destroyrem = RS:FindFirstChild("MenuToys") and RS.MenuToys:FindFirstChild("DestroyToy")
+    if inv and destroyrem then
+        for _, v in pairs(inv:GetChildren()) do
+            if v.Name == "AntiKick1" or v.Name == "AntiKick2" or v.Name == "AntiKick" or v.Name == "NinjaShuriken" then
+                pcall(function() destroyrem:FireServer(v) end)
+            end
+        end
+    end
+end
+
+-- ล้างของเก่าก่อนเริ่มรอบใหม่
+ClearKunai()
+
+task.spawn(function()
+    local setOwner = RS:WaitForChild("GrabEvents"):WaitForChild("SetNetworkOwner")
+    local stickyEvent = RS:WaitForChild("PlayerEvents"):WaitForChild("StickyPartEvent")
+    local spawnRemote = RS:WaitForChild("MenuToys"):WaitForChild("SpawnToyRemoteFunction")
+    local canSpawn = Player:WaitForChild("CanSpawnToy")
+
+    local function getHRP()
+        if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+            return Player.Character.HumanoidRootPart
+        else
+            return Player.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
+        end
+    end
+
+    local function CheckForHome()
+        if not Workspace.PlotItems.PlayersInPlots:FindFirstChild(Player.Name) then return false end
+        for _, v in pairs(Workspace.Plots:GetChildren()) do
+            local sign = v:FindFirstChild("PlotSign")
+            local owners = sign and sign:FindFirstChild("ThisPlotsOwners")
+            if owners then
+                for _, b in pairs(owners:GetChildren()) do
+                    if b.Value == Player.Name then
+                        local folder = Workspace.PlotItems:FindFirstChild(v.Name)
+                        if folder then return true, folder end
+                    end
+                end
+            end
+        end
+        return false
+    end
+
+    -- เพิ่มพารามิเตอร์ offsetCFrame เพื่อกำหนดตำแหน่งปักของอันที่ 1 และอันที่ 2
+    local function StickKunai(kunai, offsetCFrame)
+        if not kunai or not kunai:FindFirstChild("StickyPart") then return end
+        local currentHRP = getHRP()
+        if not currentHRP then return end
+
+        if kunai:FindFirstChild("SoundPart") then
+            if not kunai.SoundPart:FindFirstChild("PartOwner") or kunai.SoundPart.PartOwner.Value ~= Player.Name then 
+                setOwner:FireServer(kunai.SoundPart, kunai.SoundPart.CFrame)
+            end
+        end
+
+        local firePart = currentHRP:FindFirstChild("FirePlayerPart") or currentHRP:WaitForChild("FirePlayerPart", 5)
+        if firePart then
+            -- ปักเข้ากับ FirePlayerPart ตามระยะที่กำหนด (อันแรกตรงกลาง, อันสองต่อท้ายด้านหลัง)
+            stickyEvent:FireServer(kunai.StickyPart, firePart, offsetCFrame * CFrame.Angles(0, math.rad(90), math.rad(90)))
+        end
+
+        for _, obj in pairs(kunai:GetChildren()) do
+            if obj.Name == "Pyramid" then
+                obj.CanTouch = false; obj.CanCollide = false; obj.CanQuery = false; obj.Transparency = 0
+                if not obj:FindFirstChild("Highlight") then
+                    local high = Instance.new("Highlight", obj)
+                    high.FillColor = Color3.fromRGB(0, 0, 0)
+                end
+            elseif obj.Name == "Main" then
+                obj.CanTouch = false; obj.CanCollide = false; obj.CanQuery = false; obj.Transparency = 0
+                if not obj:FindFirstChild("Highlight") then
+                    local high = Instance.new("Highlight", obj)
+                    high.FillColor = Color3.fromRGB(255, 255, 255)
+                end
+            elseif obj:IsA("BasePart") then
+                obj.CanTouch = false; obj.CanCollide = false; obj.CanQuery = false; obj.Transparency = 1
+            end
+        end
+    end
+
+    local function SpawnToy(name, customTag)
+        local t = tick()
+        while not canSpawn.Value do
+            if not getgenv().ShurikenAntiKick or tick() - t > 5 then return nil end
+            task.wait(0.1)
+        end
+        local currentHRP = getHRP()
+        if currentHRP then
+            task.spawn(function()
+                pcall(function()
+                    spawnRemote:InvokeServer(name, currentHRP.CFrame * CFrame.new(0, 12, 20), Vector3.new(0, 0, 0))
+                end)
+            end)
+        end
+        local boolik, house = CheckForHome()
+        local inv = Workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+        local spawnedObj = nil
+
+        if boolik and house then 
+            spawnedObj = house:WaitForChild(name, 2)
+        elseif not Workspace.PlotItems.PlayersInPlots:FindFirstChild(Player.Name) and inv then 
+            spawnedObj = inv:WaitForChild(name, 2)
+        end
+
+        if spawnedObj and customTag then
+            spawnedObj.Name = customTag
+        end
+        return spawnedObj
+    end
+
+    -- ฟังก์ชันย่อยสำหรับดูแลดาวกระจายแต่ละอันแยกกัน (อันที่ 1 และ อันที่ 2)
+    local function RunShurikenSlot(tagName, offsetCFrame)
+        while getgenv().ShurikenAntiKick do
+            task.wait(0.05)
+            if not Player.Character or not Player.Character:FindFirstChild("Humanoid") or Player.Character.Humanoid.Health <= 0 then 
+                continue 
+            end
+
+            local boolik, house = CheckForHome()
+            local inv = Workspace:FindFirstChild(Player.Name .. "SpawnedInToys")
+            local container = (boolik and house) or inv
+            local kunai = container and container:FindFirstChild(tagName)
+
+            if Workspace.PlotItems.PlayersInPlots:FindFirstChild(Player.Name) then 
+                if boolik and house and Workspace.Plots:FindFirstChild(house.Name) then
+                    local sign = Workspace.Plots[house.Name]:FindFirstChild("PlotSign")
+                    if sign and sign.ThisPlotsOwners.Value.TimeRemainingNum.Value > 89 and not kunai then 
+                        kunai = SpawnToy("NinjaShuriken", tagName)
+                        if kunai then StickKunai(kunai, offsetCFrame) end
+                    end
+                end
+            else
+                if not kunai then
+                    kunai = SpawnToy("NinjaShuriken", tagName)
+                    if kunai then StickKunai(kunai, offsetCFrame) end
+                end
+            end
+
+            if kunai then
+                repeat
+                    if kunai and kunai:FindFirstChild("StickyPart") and kunai.StickyPart.CanTouch == true then
+                        StickKunai(kunai, offsetCFrame)
+                    end
+                    task.wait(0.3)
+                until not kunai or not getgenv().ShurikenAntiKick or not kunai:FindFirstChild("StickyPart") or kunai.StickyPart.CanTouch == false 
+                    or not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") 
+                    or (Player.Character.HumanoidRootPart.Position - kunai.StickyPart.Position).Magnitude >= 20
+
+                if not kunai or not kunai:FindFirstChild("StickyPart") or not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") or (Player.Character.HumanoidRootPart.Position - kunai.StickyPart.Position).Magnitude >= 20 then 
+                    if kunai then
+                        local destroyrem = RS:FindFirstChild("MenuToys") and RS.MenuToys:FindFirstChild("DestroyToy")
+                        if destroyrem then pcall(function() destroyrem:FireServer(kunai) end) end
+                    end
+                else
+                    pcall(function()
+                        repeat task.wait(0.05) until not getgenv().ShurikenAntiKick or not Player.Character or not Player.Character:FindFirstChild("Humanoid") or not kunai or not kunai:FindFirstChild("StickyPart") or not kunai.StickyPart:FindFirstChild("StickyWeld") or not kunai.StickyPart.StickyWeld.Part1
+                        if not kunai or not kunai:FindFirstChild("StickyPart") or (Player.Character and Player.Character:FindFirstChild("Humanoid") and Player.Character.Humanoid.Health <= 0) or not kunai["StickyPart"]:FindFirstChild("StickyWeld").Part1 then 
+                            local destroyrem = RS:FindFirstChild("MenuToys") and RS.MenuToys:FindFirstChild("DestroyToy")
+                            if destroyrem and kunai then pcall(function() destroyrem:FireServer(kunai) end) end
+                        end
+                    end)
+                end
+            end
+        end
+    end
+
+    -- รันพร้อมกัน 2 Thread:
+    -- อันที่ 1: ปักตรงกลางตัว CFrame.new(0, 0, 0)
+    task.spawn(function()
+        RunShurikenSlot("AntiKick1", CFrame.new(0, 0, 0))
+    end)
+
+    -- หน่วงเวลา 0.25 วินาทีเพื่อรอคูลดาวน์การเสกของเกม แล้วเสกอันที่ 2 ต่อท้ายด้านหลัง
+    task.wait(0.25)
+
+    -- อันที่ 2: ปักต่อท้ายด้านหลังอันที่ 1 (ปรับเลข 0.45 ในแกน Z เพื่อเพิ่ม/ลดระยะห่างด้านหลัง)
+    task.spawn(function()
+        RunShurikenSlot("AntiKick2", CFrame.new(0, 0, 0.45))
+    end)
+end)]=]
+        scriptBox.PlaceholderText = "-- วางโค้ดสคริปต์ตรงนี้"
+        scriptBox.PlaceholderColor3 = Color3.fromRGB(145, 130, 175)
+        scriptBox.TextColor3 = COLORS.White
+        scriptBox.Font = Enum.Font.Code
+        scriptBox.TextSize = 13
+        scriptBox.TextXAlignment = Enum.TextXAlignment.Left
+        scriptBox.TextYAlignment = Enum.TextYAlignment.Top
+        scriptBox.TextWrapped = false
+        scriptBox.MultiLine = true
+        scriptBox.ClearTextOnFocus = false
+        scriptBox.TextEditable = true
+        scriptBox.ZIndex = 123
+        scriptBox.Parent = card
+        addCorner(scriptBox, 7)
+        addStroke(scriptBox, COLORS.Purple, 1)
+
+        local note = Instance.new("TextLabel")
+        note.Name = "ScriptBoxNote"
+        note.AnchorPoint = Vector2.new(0, 1)
+        note.Position = UDim2.new(0, 14, 1, -48)
+        note.Size = UDim2.new(1, -150, 0, 34)
+        note.BackgroundTransparency = 1
+        note.Text = "ช่องนี้ใช้เก็บ/แก้ไขข้อความเท่านั้น ไม่ได้รันโค้ด"
+        note.TextColor3 = COLORS.Yellow
+        note.Font = Enum.Font.Gotham
+        note.TextSize = 10
+        note.TextWrapped = true
+        note.TextXAlignment = Enum.TextXAlignment.Left
+        note.ZIndex = 122
+        note.Parent = card
+
+        local clearButton = Instance.new("TextButton")
+        clearButton.Name = "ClearScriptText"
+        clearButton.AnchorPoint = Vector2.new(1, 1)
+        clearButton.Position = UDim2.new(1, -88, 1, -12)
+        clearButton.Size = UDim2.fromOffset(68, 30)
+        clearButton.BackgroundColor3 = Color3.fromRGB(65, 28, 110)
+        clearButton.BorderSizePixel = 0
+        clearButton.Text = "Clear"
+        clearButton.TextColor3 = COLORS.White
+        clearButton.Font = Enum.Font.GothamBold
+        clearButton.TextSize = 12
+        clearButton.ZIndex = 124
+        clearButton.Parent = card
+        addCorner(clearButton, 7)
+        addStroke(clearButton, COLORS.NeonPurple, 1)
+
+        local closeButton = Instance.new("TextButton")
+        closeButton.Name = "CloseScriptSettings"
+        closeButton.AnchorPoint = Vector2.new(1, 1)
+        closeButton.Position = UDim2.new(1, -14, 1, -12)
+        closeButton.Size = UDim2.fromOffset(62, 30)
+        closeButton.BackgroundColor3 = COLORS.Purple
+        closeButton.BorderSizePixel = 0
+        closeButton.Text = "Close"
+        closeButton.TextColor3 = COLORS.White
+        closeButton.Font = Enum.Font.GothamBold
+        closeButton.TextSize = 12
+        closeButton.ZIndex = 124
+        closeButton.Parent = card
+        addCorner(closeButton, 7)
+        addStroke(closeButton, COLORS.NeonPurple, 1)
+
+        clearButton.Activated:Connect(function()
+            scriptBox.Text = ""
+            scriptBox:CaptureFocus()
+        end)
+
+        closeButton.Activated:Connect(function()
+            overlay.Visible = false
+        end)
+
+        openButton.Activated:Connect(function()
+            local now = os.clock()
+            if now - lastAntiAllTap <= 0.35 then
+                overlay.Visible = true
+                lastAntiAllTap = 0
+            else
+                lastAntiAllTap = now
+            end
+        end)
     end
 end
