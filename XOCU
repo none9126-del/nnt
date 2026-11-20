@@ -1,11 +1,10 @@
--- XOCU
+--1q131231233
 game.Players.LocalPlayer.PlayerScripts.CharacterAndBeamMove.Enabled = false
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/iavichbest/XOCU/refs/heads/main/UI"))()
-local UserInputService = game:GetService("UserInputService")
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/sladkoeshkaogg-svg/XOCU/refs/heads/main/XOCU%20FAKELIBRORY.lua"))()
 
 Players = game:GetService('Players')
 TweenService = game:GetService('TweenService')
@@ -14641,28 +14640,6 @@ do
     })
 end
 
+print("XOCU Loaded Xocu and 9rr so goated")
+
 end
-
-local P: Players = game:GetService("Players")
-local LP: Player = P.LocalPlayer
-
-task.spawn(function()
-	while task.wait() do
-		local char = LP.Character
-		if char then
-			for _, name in ipairs({"Head", "Torso", "Left Arm", "Left Leg", "Right Arm", "Right Leg"}) do
-				local part = char:FindFirstChild(name)
-				if part and part:IsA("BasePart") and part.Transparency == 1 then
-					part.Transparency = 0
-				end
-			end
-
-			local hair = char:FindFirstChild("Pal Hair")
-			local handle = hair and hair:FindFirstChild("Handle")
-
-			if handle and handle:IsA("BasePart") and handle.Transparency == 1 then
-				handle.Transparency = 0
-			end
-		end
-	end
-end)
