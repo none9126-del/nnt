@@ -1,4 +1,8 @@
 --1q131231233
+-- Startup service references used by sections before the main UI is created
+local UserInputService = game:GetService("UserInputService")
+local Player = game:GetService("Players").LocalPlayer
+local R = game:GetService("RunService")
 game.Players.LocalPlayer.PlayerScripts.CharacterAndBeamMove.Enabled = false
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
